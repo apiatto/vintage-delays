@@ -40,3 +40,20 @@ target_include_directories(slopebox_render PRIVATE Source)
 
 add_test(NAME slopebox_regression
     COMMAND slopebox_render --check ${CMAKE_CURRENT_SOURCE_DIR}/tests/reference_levels.txt)
+
+# Panel snapshot for the manual (needs a display; on Linux run it under xvfb-run).
+option(VDC_BUILD_DOC_TOOLS "Build the documentation helpers" OFF)
+if(VDC_BUILD_DOC_TOOLS)
+    juce_add_console_app(slopebox_snapshot PRODUCT_NAME "slopebox_snapshot")
+    target_sources(slopebox_snapshot PRIVATE
+        tools/snapshot.cpp
+        Source/PluginProcessor.cpp
+        Source/PluginEditor.cpp)
+    target_compile_definitions(slopebox_snapshot PRIVATE
+        JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_MODAL_LOOPS_PERMITTED=1 JucePlugin_Name="Slopebox 1024")
+    target_link_libraries(slopebox_snapshot PRIVATE
+        vdc::core
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags)
+endif()
