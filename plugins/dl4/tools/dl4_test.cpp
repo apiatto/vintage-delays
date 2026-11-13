@@ -8,6 +8,7 @@
 // full 4:1 range, and nothing goes non-finite at extreme settings.
 
 #include "Dl4Config.h"
+#include "UnitHiss.h"
 
 #include <cstdio>
 #include <fstream>
@@ -211,6 +212,33 @@ void writeWav (const std::string& path, const Buffer& l, const Buffer& r)
     for (uint32_t i = 0; i < frames; ++i) { f.write ((const char*) &l[i], 4); f.write ((const char*) &r[i], 4); }
 }
 
+void checkHiss()
+{
+    // VINTAGE hiss: about -90 dBFS RMS, darker at 8 kHz than at 500 Hz (two-pole band sums).
+    holdfast::UnitHiss h;
+    h.prepare (fs);
+    Buffer x ((size_t) (4.0 * fs), 0.0f);
+    h.add (x.data(), (int) x.size(), 1.0f);
+    const double level = 20.0 * std::log10 (rms (x, 0.5, 4.0));
+    auto band = [&] (double f0)
+    {
+        // Goertzel-free estimate: RMS of a narrow resonator output around f0.
+        const double r = 0.995, w = 2.0 * vdc::kPi * f0 / fs;
+        double y1 = 0, y2 = 0, acc = 0;
+        for (size_t i = (size_t) (0.5 * fs); i < x.size(); ++i)
+        {
+            const double y = x[i] + 2.0 * r * std::cos (w) * y1 - r * r * y2;
+            y2 = y1; y1 = y; acc += y * y;
+        }
+        // The resonator's peak gain scales with 1/sin(w): remove it so bands compare fairly.
+        return 10.0 * std::log10 (acc * std::sin (w) * std::sin (w));
+    };
+    const double tilt = band (8000.0) - band (500.0);
+    char msg[120];
+    std::snprintf (msg, sizeof msg, "hiss: %.1f dBFS, 8 kHz vs 500 Hz %.1f dB", level, tilt);
+    check (level > -92.0 && level < -88.0 && tilt < -12.0 && tilt > -24.0, msg);
+}
+
 void renderDemos()
 {
     // Plucked test phrase.
@@ -274,6 +302,7 @@ int main (int argc, char** argv)
     checkRepeat();
     checkVcoShapes();
     checkExtremes();
+    checkHiss();
 
     if (argc > 1 && std::string (argv[1]) == "--render")
         renderDemos();

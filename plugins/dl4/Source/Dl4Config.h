@@ -60,7 +60,7 @@ inline vdc::EngineConfig makeConfig (bool extendedMemory)
     for (double ms : tapMs (extendedMemory))
         c.tapCells.push_back ((int) (ms * kClockAtX1 / 1000.0 + 0.5));
     c.bandwidthHz = 15000.0;
-    c.feedbackLowpassHz = 12000.0;
+    c.feedbackLowpassHz = 10000.0; // calibrated: ~1 dB loss per repeat at 3-8 kHz, as in demo recordings
     c.feedbackLowCutHz = 175.0;    // LO-EQ CUT
     c.feedbackHighCutHz = 3300.0;  // HI-EQ CUT
     c.preEmphasisZero = 50.0e-6;

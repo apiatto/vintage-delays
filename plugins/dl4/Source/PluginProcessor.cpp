@@ -156,6 +156,8 @@ void HoldfastProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     currentSampleRate = sampleRate;
     applyMemorySetting();
     scratch.setSize (4, samplesPerBlock);
+    hissA.prepare (sampleRate);
+    hissB.prepare (sampleRate);
 }
 
 bool HoldfastProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -249,6 +251,22 @@ void HoldfastProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
         unitA.process (inL, nullptr, aL, aR, numSamples);
         unitB.process (inR, nullptr, bL, bR, numSamples);
         juce::FloatVectorOperations::copy (aR, bL, numSamples);
+    }
+
+    // VINTAGE: the unit's own hiss floor (see UnitHiss.h), mostly from the delay path, so it
+    // follows the delay share of the mix and the output level.
+    {
+        const float amount = params.character * (0.3f + 0.7f * std::abs (params.mix))
+                             * juce::Decibels::decibelsToGain (params.outputDb);
+        if (! linked)
+        {
+            hissA.add (aL, numSamples, amount, aR);
+        }
+        else
+        {
+            hissA.add (aL, numSamples, amount);
+            hissB.add (aR, numSamples, amount);
+        }
     }
 
     if (numOut >= 2)

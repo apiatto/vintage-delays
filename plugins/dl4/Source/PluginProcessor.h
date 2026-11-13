@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 #include "Dl4Config.h"
+#include "UnitHiss.h"
 
 namespace ParamIDs
 {
@@ -91,6 +92,7 @@ private:
     long long autoSteps = 0;
     float lastInput = 0.0f;      // for the SLEW meter
     juce::AudioBuffer<float> scratch;
+    holdfast::UnitHiss hissA { 0x1234567u }, hissB { 0x7654321u };  // VINTAGE noise floor, one per unit
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HoldfastProcessor)
 };
