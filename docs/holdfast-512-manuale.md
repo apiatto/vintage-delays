@@ -239,3 +239,5 @@ Holdfast 512 segue il manuale dell'apparecchio originale, ma alcune cose sono di
 | Ingresso / uscita | −24 … +26 dB / −24 … +12 dB |
 | Canali | Mono o stereo in ingresso, stereo o mono in uscita; Linked Pair = due unità indipendenti |
 | Formati | Audio Unit e VST3 (macOS), VST3 (Windows), Standalone |
+
+<p class="footer-note">Holdfast 512 · Slopebox Audio. I nomi dei prodotti citati appartengono ai rispettivi proprietari; questo plugin non è affiliato né approvato da loro.</p>
