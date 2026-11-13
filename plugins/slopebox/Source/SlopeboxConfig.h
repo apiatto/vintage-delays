@@ -24,8 +24,14 @@ inline vdc::EngineConfig makeConfig()
     c.clockAtX1 = 256000.0;
     c.vcoRatio = 4.0;
     c.tapCells = { 0, 256, 1024, 4096, 16384, 65536, 262144 };
-    c.bandwidthHz = 16000.0;
-    c.feedbackLowpassHz = 12000.0;
+    // Calibrated against recordings of the original unit (plugins/slopebox/calibration/report.md):
+    // the first pass reaches ~15 kHz with no sharp cut, and each trip round the regeneration loop
+    // loses about 1 dB at 4 kHz and 3 dB at 8 kHz relative to 1 kHz, levelling off higher up.
+    // A gentle first-order shelf (about -2.4 dB above ~6 kHz) fits that better than a 12 kHz low-pass.
+    c.bandwidthHz = 20000.0;
+    c.feedbackLowpassHz = 0.0;
+    c.feedbackShelfZero = 26.8e-6;
+    c.feedbackShelfPole = 35.0e-6;
     c.preEmphasisZero = 50.0e-6;
     c.preEmphasisPole = 15.0e-6;
     c.syntheticStereo = true;

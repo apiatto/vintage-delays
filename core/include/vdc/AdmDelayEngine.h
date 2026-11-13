@@ -36,7 +36,10 @@ struct EngineConfig
     double vcoRatio = 4.0;              // clock range of the VCO control (x1 .. x0.25 = 4:1)
     std::vector<int> tapCells { 0, 256, 1024, 4096, 16384, 65536, 262144 }; // 0 = memory bypassed
     double bandwidthHz = 16000.0;       // anti-alias and reconstruction filters (4th order)
-    double feedbackLowpassHz = 12000.0; // filter in the regeneration path
+    double feedbackLowpassHz = 12000.0; // filter in the regeneration path, 0 = none
+    double feedbackLowpassQ = 0.7071;   // its Q
+    double feedbackShelfZero = 0.0;     // optional first-order high shelf in the regeneration path,
+    double feedbackShelfPole = 0.0;     // H(s) = (1 + s*zero) / (1 + s*pole); zero < pole cuts the top. 0 = off
     double feedbackLowCutHz = 0.0;      // optional switchable EQ in the regeneration path (2nd order);
     double feedbackHighCutHz = 0.0;     // 0 = not fitted. Switched by Params::feedbackLowCut/HighCut
     double preEmphasisZero = 50.0e-6;   // pre-emphasis H(s) = (1 + s*zero) / (1 + s*pole)
@@ -102,7 +105,10 @@ public:
         const double bw = std::min (cfg.bandwidthHz, fs * 0.45);
         antiAlias.set (fs, bw);
         reconstruct.set (fs, bw);
-        feedbackLp.setLowpass (fs, cfg.feedbackLowpassHz, 0.7071);
+        useFeedbackLp = cfg.feedbackLowpassHz > 0.0;
+        if (useFeedbackLp) feedbackLp.setLowpass (fs, std::min (cfg.feedbackLowpassHz, fs * 0.45), cfg.feedbackLowpassQ);
+        useFeedbackShelf = cfg.feedbackShelfZero > 0.0 && cfg.feedbackShelfPole > 0.0;
+        if (useFeedbackShelf) feedbackShelf.setShelf (fs, cfg.feedbackShelfZero, cfg.feedbackShelfPole);
         if (cfg.feedbackLowCutHz > 0.0) feedbackLowCut.setHighpass (fs, cfg.feedbackLowCutHz, 0.7071);
         if (cfg.feedbackHighCutHz > 0.0) feedbackHighCut.setLowpass (fs, cfg.feedbackHighCutHz, 0.7071);
 
@@ -138,6 +144,7 @@ public:
         antiAlias.reset();
         reconstruct.reset();
         feedbackLp.reset();
+        feedbackShelf.reset();
         feedbackLowCut.reset();
         feedbackHighCut.reset();
         preEmphasis.reset();
@@ -274,7 +281,8 @@ public:
             wet = dcOut;
 
             // Regenerated signal, still pre-emphasised, through the feedback low-pass.
-            fbSample = feedbackLp.process (wet);
+            fbSample = useFeedbackLp ? feedbackLp.process (wet) : wet;
+            if (useFeedbackShelf) fbSample = feedbackShelf.process (fbSample);
             {
                 // Run the EQ filters all the time so switching them does not click from stale state.
                 const double lc = cfg.feedbackLowCutHz > 0.0 ? feedbackLowCut.process (fbSample) : fbSample;
@@ -394,7 +402,8 @@ private:
 
     Lowpass4 antiAlias, reconstruct;
     Biquad feedbackLp, stereoLowpass, feedbackLowCut, feedbackHighCut;
-    FirstOrder preEmphasis, deEmphasis;
+    FirstOrder preEmphasis, deEmphasis, feedbackShelf;
+    bool useFeedbackShelf = false, useFeedbackLp = true;
     FirstOrder phaseShift[4];
     bool usePreEmphasis = true;
 
