@@ -489,7 +489,7 @@ void SlopeboxPanel::paint (juce::Graphics& g)
 
 void SlopeboxPanel::resized()
 {
-    constexpr int knob = 84;
+    static constexpr int knob = 84;
     auto knobAt = [] (int cx, int cy) { return juce::Rectangle<int> (knob, knob).withCentre ({ cx, cy }); };
 
     input.slider.setBounds (knobAt (228, 84));
