@@ -1,0 +1,12 @@
+flange -22.9839 -21.0848
+flange_feedback_pos -22.9894 -21.5617
+flange_feedback_neg -27.7244 -26.6001
+doubling -23.9323 -21.6927
+chorus -23.2301 -21.2488
+vibrato -20.8791 -18.6655
+tuned_resonance -13.5473 -11.2104
+slapback -23.4305 -21.1930
+echo_feedback -22.9176 -20.7168
+echo_feedback_clean -22.9109 -20.7106
+echo_1024ms_hot -19.6519 -17.4563
+envelope_sweep -19.5026 -18.0974
