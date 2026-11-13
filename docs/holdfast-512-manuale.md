@@ -1,10 +1,11 @@
 ---
 title: "Holdfast 512"
 subtitle: "Manuale d'uso"
+date: "Versione 1.0 · novembre 2026"
 lang: it
 ---
 
-# 1. Introduzione
+## 1. Introduzione
 
 Holdfast 512 è un delay digitale ispirato ai rack ADM dei primi anni '80 da 1 a 512 ms. Riproduce il
 modo in cui quelle macchine lavoravano: l'audio viene convertito in un flusso a 1 bit da un modulatore
@@ -24,7 +25,7 @@ Le caratteristiche principali:
 Il pannello è disegnato in codice e non usa loghi né nomi di marchi. Holdfast 512 condivide il motore
 ADM con Slopebox 1024, con una configurazione diversa.
 
-# 2. Installazione
+## 2. Installazione
 
 Holdfast 512 esiste in tre formati:
 
@@ -49,7 +50,7 @@ silenziato per evitare un innesco: riattivalo da **Settings…**.
 Cambiare **MEMORY** da INT a EXT (o viceversa) riorganizza la memoria: per un istante l'audio si ferma
 e il contenuto del ritardo si azzera.
 
-# 3. Il pannello
+## 3. Il pannello
 
 ![Il pannello di Holdfast 512](img/holdfast-512-pannello.png)
 
@@ -63,7 +64,7 @@ Le levette si azionano con un clic: quelle a due posizioni scattano a ogni clic,
 del mouse e il clic direttamente sulle scritte accanto alla levetta. Le manopole si girano trascinando
 in su e in giù; il doppio clic le riporta al valore iniziale.
 
-## 3.1 Ingresso
+### 3.1 Ingresso
 
 | Comando | Funzione | Valori |
 |---------|----------|--------|
@@ -75,7 +76,7 @@ Regola INPUT in modo che PEAK arrivi a 10 dB e tocchi 0 dB solo sui picchi. Se
 a 0 dB ma PEAK no, il segnale è molto brillante: abbassa un po' INPUT, oppure accetta la grana come parte
 del carattere.
 
-## 3.2 PROGRAM
+### 3.2 PROGRAM
 
 | Comando | Funzione | Valori |
 |---------|----------|--------|
@@ -86,7 +87,7 @@ del carattere.
 Durante REPEAT il **DELAY FACTOR** cambia ancora la durata e l'intonazione del loop: girandolo si
 ottengono effetti di rallentamento e accelerazione fino a due ottave.
 
-## 3.3 DELAY
+### 3.3 DELAY
 
 | Comando | Funzione | Valori |
 |---------|----------|--------|
@@ -102,7 +103,7 @@ In **AUTO** i tempi della finestra vengono percorsi avanti e indietro (dal più 
 ritorno), un passo per ogni ciclo del modulatore. La velocità dei passi si regola con **SPEED**; in
 questa modalità SELECT e i clic sui LED sono ignorati.
 
-## 3.4 REGENERATION
+### 3.4 REGENERATION
 
 | Comando | Funzione | Valori |
 |---------|----------|--------|
@@ -114,7 +115,7 @@ questa modalità SELECT e i clic sui LED sono ignorati.
 Anche con EQ su FLAT ogni ripetizione perde un po' di acuti (circa 1 dB tra 3 e 8 kHz), come
 sull'originale.
 
-## 3.5 TIME BASE MODULATOR
+### 3.5 TIME BASE MODULATOR
 
 Il modulatore varia il clock della memoria, quindi il tempo di ritardo e l'intonazione delle
 ripetizioni. È quello che produce flanger, chorus e vibrato.
@@ -129,7 +130,7 @@ ripetizioni. È quello che produce flanger, chorus e vibrato.
 Con la forma quadra il ritardo salta tra due valori: con tempi medi si ottiene un trillo, con tempi
 lunghi un'eco che alterna due intonazioni.
 
-## 3.6 OUTPUT
+### 3.6 OUTPUT
 
 | Comando | Funzione | Valori |
 |---------|----------|--------|
@@ -140,7 +141,7 @@ lunghi un'eco che alterna due intonazioni.
 
 Per usare Holdfast 512 in una mandata (send) di effetti, porta MIX tutto su DELAY.
 
-## 3.7 Fascia inferiore: aggiunte del plugin
+### 3.7 Fascia inferiore: aggiunte del plugin
 
 | Comando | Funzione | Valori |
 |---------|----------|--------|
@@ -151,7 +152,7 @@ Per usare Holdfast 512 in una mandata (send) di effetti, porta MIX tutto su DELA
 | VINTAGE | Quantità del carattere dell'originale: grana della conversione ADM e il leggero soffio di fondo. A 0 % stessa catena con memoria pulita e senza soffio. | 0 … 100 %, iniziale 100 % |
 | OUT LEVEL | Livello d'uscita del plugin. | −24 … +12 dB, iniziale 0 dB |
 
-# 4. Flusso del segnale
+## 4. Flusso del segnale
 
 Il percorso del segnale segue lo schema dell'apparecchio originale:
 
@@ -171,24 +172,24 @@ Il percorso del segnale segue lo schema dell'apparecchio originale:
 Con **REPEAT** su ON l'ingresso e il feedback sono esclusi: la memoria gira su se stessa senza essere
 riscritta, quindi il loop non perde qualità per quanto a lungo lo lasci andare.
 
-# 5. Impostazioni di esempio
+## 5. Impostazioni di esempio
 
 Partendo dai valori iniziali (doppio clic su ogni manopola), cambia solo quanto indicato.
 
-| Effetto | SCALE / tempo | DELAY FACTOR | WIDTH | SPEED | SHAPE | FEEDBACK | MIX | Note |
-|--------------|--------------|--------|-------|--------|------|--------|------|--------------------------|
-| Flanger classico | 1X / 2 ms | ×0,5 | 100 % | 0,2 Hz | TRI | 70 % | 50 % | Prova PHASE su OUT per un colore diverso |
-| Flanger "jet" profondo | 1X / 1 ms | ×1 | 100 % | 0,1 Hz | TRI | 85 % | 50 % | DELAY PHASE OUT per un suono più scavato |
-| Chorus | 2X / 16 ms | ×0,6 | 15 % | 0,7 Hz | SIN | 20 % | 50 % | In stereo: Linked Pair, SPREAD 50 % |
-| Raddoppio (doubling) | 2X / 32 ms | ×1 | 5 % | 0,3 Hz | SIN | 0 % | 45 % | Voce o chitarra ritmica |
-| Vibrato | 2X / 32 ms | ×0,5 | 30 % | 5 Hz | SIN | 0 % | 100 % | Solo ritardato, nessun segnale diretto |
-| Trillo | 2X / 64 ms | ×0,5 | 60 % | 4 Hz | SQR | 0 % | 100 % | Salta tra due intonazioni |
-| Slapback | 4X / 128 ms | ×0,8 | 0 % | — | — | 0 % | 40 % | Rockabilly, voci anni '50 |
-| Eco lunga | 4X / 512 ms | ×0,8 | 0 % | — | — | 60 % | 40 % | HI EQ su CUT per un'eco più scura |
-| Eco con AUTO | 4X, DELAY AUTO | ×1 | 0 % | 0,5 Hz | — | 40 % | 40 % | I tempi cambiano a ogni ciclo |
-| Loop con REPEAT | 4X / il più lungo (2,5 s con MEMORY EXT) | ×1 | 0 % | — | — | 0 % | 50 % | Suona, poi REPEAT ON; gira DELAY FACTOR |
+| Effetto | Impostazioni | Note |
+|---------|----------------------------------------------|------------------------|
+| Flanger classico | 1X / 2 ms · DELAY FACTOR ×0,5 · WIDTH 100 % · SPEED 0,2 Hz · SHAPE TRI · FEEDBACK 70 % · MIX 50 % | Prova PHASE su OUT per un colore diverso |
+| Flanger "jet" profondo | 1X / 1 ms · DELAY FACTOR ×1 · WIDTH 100 % · SPEED 0,1 Hz · SHAPE TRI · FEEDBACK 85 % · MIX 50 % | DELAY PHASE OUT per un suono più scavato |
+| Chorus | 2X / 16 ms · DELAY FACTOR ×0,6 · WIDTH 15 % · SPEED 0,7 Hz · SHAPE SIN · FEEDBACK 20 % · MIX 50 % | In stereo: Linked Pair, SPREAD 50 % |
+| Raddoppio (doubling) | 2X / 32 ms · DELAY FACTOR ×1 · WIDTH 5 % · SPEED 0,3 Hz · SHAPE SIN · FEEDBACK 0 % · MIX 45 % | Voce o chitarra ritmica |
+| Vibrato | 2X / 32 ms · DELAY FACTOR ×0,5 · WIDTH 30 % · SPEED 5 Hz · SHAPE SIN · FEEDBACK 0 % · MIX 100 % | Solo ritardato, nessun segnale diretto |
+| Trillo | 2X / 64 ms · DELAY FACTOR ×0,5 · WIDTH 60 % · SPEED 4 Hz · SHAPE SQR · FEEDBACK 0 % · MIX 100 % | Salta tra due intonazioni |
+| Slapback | 4X / 128 ms · DELAY FACTOR ×0,8 · WIDTH 0 % · FEEDBACK 0 % · MIX 40 % | Rockabilly, voci anni '50 |
+| Eco lunga | 4X / 512 ms · DELAY FACTOR ×0,8 · WIDTH 0 % · FEEDBACK 60 % · MIX 40 % | HI EQ su CUT per un'eco più scura |
+| Eco con AUTO | 4X, DELAY AUTO · DELAY FACTOR ×1 · WIDTH 0 % · SPEED 0,5 Hz · FEEDBACK 40 % · MIX 40 % | I tempi cambiano a ogni ciclo |
+| Loop con REPEAT | 4X / il più lungo (2,5 s con MEMORY EXT) · DELAY FACTOR ×1 · WIDTH 0 % · FEEDBACK 0 % · MIX 50 % | Suona, poi REPEAT ON; gira DELAY FACTOR |
 
-# 6. Consigli
+## 6. Consigli
 
 - **Il livello d'ingresso conta.** Il modulatore delta lavora meglio con un segnale robusto: con INPUT
   troppo basso il suono è più granuloso, con INPUT troppo alto gli acuti forti si impastano (LED SLEW).
@@ -206,7 +207,7 @@ Partendo dai valori iniziali (doppio clic su ogni manopola), cambia solo quanto 
 - **Automazione.** Tutti i comandi sono automatizzabili. La manopola PEDAL, con la levetta su ON, è la
   più comoda da collegare a un pedale d'espressione MIDI.
 
-# 7. Differenze dall'originale
+## 7. Differenze dall'originale
 
 Holdfast 512 segue il manuale dell'apparecchio originale, ma alcune cose sono diverse o stimate:
 
@@ -222,7 +223,7 @@ Holdfast 512 segue il manuale dell'apparecchio originale, ma alcune cose sono di
   Linked Pair.
 - **Niente rumori di commutazione.** Cambiare tempo o SCALE non produce i clic dell'hardware.
 
-# 8. Specifiche
+## 8. Specifiche
 
 | Voce | Valore |
 |------|--------|
