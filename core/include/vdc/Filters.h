@@ -31,6 +31,20 @@ struct Biquad
         a2 = (1.0 - alpha) / a0;
     }
 
+    void setHighpass (double sampleRate, double cutoff, double q)
+    {
+        cutoff = std::min (cutoff, sampleRate * 0.45);
+        const double w0 = 2.0 * kPi * cutoff / sampleRate;
+        const double cw = std::cos (w0), sw = std::sin (w0);
+        const double alpha = sw / (2.0 * q);
+        const double a0 = 1.0 + alpha;
+        b0 = (1.0 + cw) * 0.5 / a0;
+        b1 = -(1.0 + cw) / a0;
+        b2 = b0;
+        a1 = -2.0 * cw / a0;
+        a2 = (1.0 - alpha) / a0;
+    }
+
     double process (double x)
     {
         const double y = b0 * x + z1;

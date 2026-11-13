@@ -37,6 +37,8 @@ struct EngineConfig
     std::vector<int> tapCells { 0, 256, 1024, 4096, 16384, 65536, 262144 }; // 0 = memory bypassed
     double bandwidthHz = 16000.0;       // anti-alias and reconstruction filters (4th order)
     double feedbackLowpassHz = 12000.0; // filter in the regeneration path
+    double feedbackLowCutHz = 0.0;      // optional switchable EQ in the regeneration path (2nd order);
+    double feedbackHighCutHz = 0.0;     // 0 = not fitted. Switched by Params::feedbackLowCut/HighCut
     double preEmphasisZero = 50.0e-6;   // pre-emphasis H(s) = (1 + s*zero) / (1 + s*pole)
     double preEmphasisPole = 15.0e-6;   // set both to 0 to disable
     bool syntheticStereo = true;        // phase-shift stereo on the right output
@@ -69,6 +71,8 @@ struct Params
     float externalControl = 0.0f;    // 0..1 = 0..5 V (0 = x1, 1 = x1/vcoRatio); WIDTH still mixes in the LFO
     float feedback = 0.0f;       // -1..1, centre = no regeneration, negative = out of phase
     bool repeat = false;         // infinite repeat
+    bool feedbackLowCut = false;  // regeneration EQ switches (only if the config fits the filters)
+    bool feedbackHighCut = false;
     float mix = 0.0f;            // -1..1: -1 = delayed only, inverted; 0 = source; +1 = delayed only
     float stereo = 1.0f;         // 0 = mono, 1 = full synthesised stereo (if the config has it)
     float character = 1.0f;      // 0 = clean storage, 1 = full ADM conversion
@@ -99,6 +103,8 @@ public:
         antiAlias.set (fs, bw);
         reconstruct.set (fs, bw);
         feedbackLp.setLowpass (fs, cfg.feedbackLowpassHz, 0.7071);
+        if (cfg.feedbackLowCutHz > 0.0) feedbackLowCut.setHighpass (fs, cfg.feedbackLowCutHz, 0.7071);
+        if (cfg.feedbackHighCutHz > 0.0) feedbackHighCut.setLowpass (fs, cfg.feedbackHighCutHz, 0.7071);
 
         usePreEmphasis = cfg.preEmphasisZero > 0.0 && cfg.preEmphasisPole > 0.0;
         if (usePreEmphasis)
@@ -132,6 +138,8 @@ public:
         antiAlias.reset();
         reconstruct.reset();
         feedbackLp.reset();
+        feedbackLowCut.reset();
+        feedbackHighCut.reset();
         preEmphasis.reset();
         deEmphasis.reset();
         for (auto& ap : phaseShift) ap.reset();
@@ -148,6 +156,8 @@ public:
 
     double getCurrentDelayMs() const { return currentDelayMs; }
     double getCurrentClockHz() const { return currentClockHz; }
+    // Phase of the internal LFO, 0..1 (0.25 = sine peak), for features that step in sync with it.
+    double getLfoPhase() const { return lfoPhase; }
     // Peak level seen by the encoder, 1.0 = LIMIT (0 dB reference = 0 dBFS).
     double getInputLevel() const { return inputLevel; }
 
@@ -265,6 +275,13 @@ public:
 
             // Regenerated signal, still pre-emphasised, through the feedback low-pass.
             fbSample = feedbackLp.process (wet);
+            {
+                // Run the EQ filters all the time so switching them does not click from stale state.
+                const double lc = cfg.feedbackLowCutHz > 0.0 ? feedbackLowCut.process (fbSample) : fbSample;
+                const double hc = cfg.feedbackHighCutHz > 0.0 ? feedbackHighCut.process (p.feedbackLowCut ? lc : fbSample) : fbSample;
+                if (p.feedbackHighCut && cfg.feedbackHighCutHz > 0.0) fbSample = hc;
+                else if (p.feedbackLowCut && cfg.feedbackLowCutHz > 0.0) fbSample = lc;
+            }
             if (usePreEmphasis) wet = deEmphasis.process (wet);
 
             // DELAY MIX: centre-tapped pot, source at the centre, either phase of the delayed
@@ -376,7 +393,7 @@ private:
     double lastDecoded = 0, lastClean = 0, prevU = 0;
 
     Lowpass4 antiAlias, reconstruct;
-    Biquad feedbackLp, stereoLowpass;
+    Biquad feedbackLp, stereoLowpass, feedbackLowCut, feedbackHighCut;
     FirstOrder preEmphasis, deEmphasis;
     FirstOrder phaseShift[4];
     bool usePreEmphasis = true;
