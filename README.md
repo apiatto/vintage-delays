@@ -16,6 +16,9 @@ plugins/slopebox/             Slopebox 1024 (ADM, memoria da 1024 ms, flanger/ec
   Source/SlopeboxConfig.h       configurazione del motore per questo modello
   tools/render.cpp              render offline e test di regressione
   tests/reference_levels.txt    livelli di riferimento del test
+plugins/dl4/                  Holdfast 512 (ADM, 1-512 ms a passi, VCO a forma variabile)
+  Source/Dl4Config.h            configurazione del motore per questo modello
+  tools/dl4_test.cpp            controlli offline (tempi dei passi, repeat, VCO) e demo audio
 plugins/<altro>/              ogni nuovo plugin ha la sua cartella con CMakeLists.txt
 ```
 
@@ -65,6 +68,39 @@ seguendo lo schema a blocchi del manuale originale.
 | Stereo | Quantità di stereo sintetizzato sull'uscita destra. |
 | Vintage | 100% = conversione ADM completa, 0% = stessa catena con memoria "pulita". |
 | Trim | Livello d'uscita del plugin. |
+
+## Holdfast 512
+
+Delay digitale ADM mono ispirato a un rack del 1980 da 1-512 ms: passi di ritardo fissi in tre range,
+un Delay Factor ×0,25–×1 per accordare fra un passo e l'altro, un VCO con forma d'onda continua
+da triangolo a sinusoide a quadra, feedback, repeat/hold infinito ed espansione di memoria fino a 2 s.
+Usa lo stesso motore della Slopebox con un'altra configurazione: banda 15 kHz, memoria 128K celle
+a 256 kHz (512 ms a ×1), nessuno stereo sintetizzato (l'originale era mono).
+
+**Valori stimati, da verificare sul manuale originale:** i passi di ogni range (ora 2/4/8, 16/32/64,
+128/256/512 ms a ×1), la frequenza del clock, la pre-enfasi e il filtro del feedback.
+
+| Controllo | Cosa fa |
+|-----------|---------|
+| Level | Guadagno d'ingresso e di sistema, −24/+26 dB; LED LIMIT a 0 dBFS, SIGNAL sopra −20 dB. |
+| Range / Step | Tre range (Short, Medium, Long) con tre passi ciascuno; i pulsanti mostrano i ms a ×1. |
+| Delay Factor | ×0,25 – ×1: ritardo reale = passo × fattore. Cambia anche l'intonazione, come sull'hardware. |
+| Mem x4 | Espansione di memoria: il range Long diventa 512/1024/2048 ms e il repeat dura 2 s. |
+| Repeat | Stacca l'ingresso e fa girare l'intera memoria su se stessa, senza degrado. |
+| Depth | Quanto il VCO prende il posto del Delay Factor; al 100% copre l'intero range 4:1. |
+| Rate | Velocità del VCO, 0,05 – 12 Hz. |
+| Shape | Forma del VCO: triangolo, sinusoide, quadra e tutte le forme intermedie. |
+| Pedal | Simula il pedale di controllo: se attivo, sostituisce il Delay Factor. |
+| Feedback | Al centro nessuna rigenerazione; a destra in fase, a sinistra in controfase. |
+| Delay Mix | −100% solo ritardato in controfase, centro solo sorgente, +100% solo ritardato. |
+| Mono / Linked Pair | Linked Pair usa due unità, una per lato, come due rack accoppiati per lo stereo. |
+| Spread | In Linked Pair, sfasa Delay Factor e Rate dell'unità destra. |
+| Vintage | 100% = conversione ADM completa, 0% = memoria "pulita". |
+| Trim | Livello d'uscita del plugin. |
+
+Controlli offline: `ctest` esegue `holdfast_test`, che verifica che ogni passo cada al tempo nominale
+a ×1 e ×0,25 (memoria normale ed espansa), che il repeat non decada, che il VCO copra il range 4:1 e
+che le impostazioni estreme restino stabili. `holdfast_test --render` scrive anche delle demo WAV.
 
 ## Build
 
