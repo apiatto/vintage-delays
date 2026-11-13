@@ -30,6 +30,8 @@ al motore cambia il suono di proposito, rigenera il riferimento con
 
 ## Slopebox 1024
 
+Manuale d'uso: [docs/slopebox-1024-manuale.pdf](docs/slopebox-1024-manuale.pdf) (sorgente in `docs/slopebox-1024-manuale.md`, si rigenera con `docs/build-manual.sh slopebox-1024-manuale`).
+
 Delay, flanger e modulatore modellato sul modello da 1024 ms di un rack ADM dei primi anni '80,
 seguendo lo schema a blocchi del manuale originale.
 
@@ -38,13 +40,13 @@ seguendo lo schema a blocchi del manuale originale.
 1. **Input Level** regola il guadagno di tutto il sistema (come sull'originale non c'è un livello d'uscita;
    il Trim è un'aggiunta del plugin). Il LED LIMIT si accende a 0 dBFS, oltre ci sono circa 6 dB di margine
    prima del limitatore; il LED ACTIVE indica segnale sopra −20 dB.
-2. Pre-enfasi, somma con il feedback, filtro anti-alias a 16 kHz.
+2. Pre-enfasi, somma con il feedback, filtro anti-alias (banda 20 kHz).
 3. Un modulatore delta adattivo (stile CVSD) converte l'audio in un flusso a 1 bit.
 4. I bit entrano in una memoria unica da 256K celle. Le prese sono a 1, 4, 16, 64, 256 e 1024 ms con il
    Delay Factor a ×1. Con tutti i pulsanti spenti la memoria è scavalcata (nessun ritardo).
 5. Un solo clock, da 256 kHz (×1) a 1,024 MHz (×0,25), guida encoder, memoria e decoder. Il ritardo è
    prese/clock: cambiare il clock cambia anche l'intonazione, come un nastro a velocità variabile.
-6. Decoder, filtro di ricostruzione, de-enfasi. Il feedback passa da un passa-basso a 12 kHz.
+6. Decoder, filtro di ricostruzione, de-enfasi. Il feedback passa da uno shelf dolce sugli acuti, calibrato sull'originale.
 7. **Infinite Repeat** stacca l'ingresso e fa girare l'intera memoria su se stessa, bit per bit.
    Il Delay Factor ne cambia durata e intonazione (fino a due ottave).
 8. L'uscita destra è lo "stereo sintetizzato": i bassi restano in fase, medi e alti vengono sfasati.
