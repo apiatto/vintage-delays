@@ -3,8 +3,8 @@
 //   holdfast_test            run the checks (exit code 0 = all passed); used by ctest
 //   holdfast_test --render   also write demo WAVs (holdfast_<name>.wav) in the current directory
 //
-// Checks: every delay step lands at its nominal time at x1 and x0.25 (standard and expanded
-// memory), REPEAT holds the memory without decay, the VCO shapes all sweep the clock over the
+// Checks: every delay tap lands at its nominal time at x1 and x0.25 (standard and external
+// memory), the AUTO program walks the SCALE window, REPEAT holds the memory without decay, the VCO shapes all sweep the clock over the
 // full 4:1 range, and nothing goes non-finite at extreme settings.
 
 #include "Dl4Config.h"
@@ -102,8 +102,8 @@ void checkTiming (bool expanded)
             const double got = centroid (out, t0 + expected - tol, t0 + expected + tol) - t0;
             const double err = std::abs (got - expected);
             char msg[160];
-            std::snprintf (msg, sizeof msg, "%s step %d x%.2f: expected %.2f ms, got %.2f ms",
-                           expanded ? "expanded" : "standard", tap, factor, expected * 1000.0, got * 1000.0);
+            std::snprintf (msg, sizeof msg, "%s tap %d x%.2f: expected %.2f ms, got %.2f ms",
+                           expanded ? "ext mem " : "standard", tap, factor, expected * 1000.0, got * 1000.0);
             check (got > 0 && err < 0.0006 + expected * 0.02, msg);
         }
     }
@@ -119,7 +119,7 @@ void checkRepeat()
     vdc::AdmDelayEngine e (holdfast::makeConfig (false));
     e.prepare (fs);
     vdc::Params p;
-    p.tap = holdfast::tapIndex (2, 0);
+    p.tap = 7; // 128 ms
     p.mix = 1.0f;
     e.setParams (p);
 
@@ -143,7 +143,7 @@ void checkVcoShapes()
         vdc::AdmDelayEngine e (holdfast::makeConfig (false));
         e.prepare (fs);
         vdc::Params p;
-        p.tap = holdfast::tapIndex (1, 0);
+        p.tap = 4; // 16 ms
         p.width = 1.0f;
         p.speedHz = 2.0f;
         p.modSource = vdc::ModSource::Shape;
@@ -165,6 +165,17 @@ void checkVcoShapes()
         std::snprintf (msg, sizeof msg, "VCO shape %.1f sweeps %.2f..%.2f ms (ratio %.2f)", shape, lo, hi, hi / lo);
         check (hi / lo > 2.8 && hi / lo < 4.5, msg); // triangle peaks are rounded by the 30 ms control smoothing
     }
+}
+
+void checkAutoProgram()
+{
+    // Up and down through the eight taps of the window: 0..7 then 6..1, period 14.
+    const int expected[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1, 0, 1 };
+    bool ok = true;
+    for (int i = 0; i < 16; ++i)
+        ok = ok && holdfast::autoSelect (i) == expected[i];
+    check (ok, "AUTO program walks the SCALE window up and down");
+    check (holdfast::tapIndex (2, 7) == 9 && holdfast::tapIndex (0, 0) == 0, "SCALE x4 reaches 512 ms, x1 starts at 1 ms");
 }
 
 void checkExtremes()
@@ -228,15 +239,18 @@ void renderDemos()
     std::vector<Demo> demos;
     vdc::Params p;
     using holdfast::tapIndex;
+    // Settings from the "typical set ups" of the manual.
     p = {}; p.tap = tapIndex (0, 1); p.width = 1.0f; p.speedHz = 0.2f; p.modSource = vdc::ModSource::Shape; p.shapeMorph = 0.0f; p.feedback = 0.8f; p.mix = 0.5f;
     demos.push_back ({ "flange_triangle", p });
-    p = {}; p.tap = tapIndex (1, 1); p.delayFactor = 0.6f; p.width = 0.15f; p.speedHz = 0.7f; p.modSource = vdc::ModSource::Shape; p.shapeMorph = 0.5f; p.feedback = 0.25f; p.mix = 0.5f;
+    p = {}; p.tap = tapIndex (1, 4); p.delayFactor = 0.6f; p.width = 0.15f; p.speedHz = 0.7f; p.modSource = vdc::ModSource::Shape; p.shapeMorph = 0.5f; p.feedback = 0.25f; p.mix = 0.5f;
     demos.push_back ({ "chorus_sine", p });
-    p = {}; p.tap = tapIndex (1, 1); p.delayFactor = 0.5f; p.width = 0.4f; p.speedHz = 3.0f; p.modSource = vdc::ModSource::Shape; p.shapeMorph = 1.0f; p.mix = 1.0f;
+    p = {}; p.tap = tapIndex (0, 5); p.delayFactor = 1.0f; p.width = 0.25f; p.speedHz = 5.0f; p.modSource = vdc::ModSource::Shape; p.shapeMorph = 0.5f; p.mix = 1.0f;
+    demos.push_back ({ "vibrato_32ms", p });
+    p = {}; p.tap = tapIndex (1, 4); p.delayFactor = 0.5f; p.width = 0.4f; p.speedHz = 3.0f; p.modSource = vdc::ModSource::Shape; p.shapeMorph = 1.0f; p.mix = 1.0f;
     demos.push_back ({ "square_trill", p });
-    p = {}; p.tap = tapIndex (2, 1); p.delayFactor = 0.7f; p.mix = 0.35f;
+    p = {}; p.tap = tapIndex (2, 5); p.delayFactor = 0.5f; p.mix = 0.35f;
     demos.push_back ({ "slapback", p });
-    p = {}; p.tap = tapIndex (2, 2); p.delayFactor = 0.8f; p.feedback = 0.6f; p.mix = 0.4f;
+    p = {}; p.tap = tapIndex (2, 7); p.delayFactor = 0.8f; p.feedback = 0.6f; p.mix = 0.4f;
     demos.push_back ({ "echo_512", p });
 
     for (const auto& d : demos)
@@ -256,6 +270,7 @@ int main (int argc, char** argv)
 {
     checkTiming (false);
     checkTiming (true);
+    checkAutoProgram();
     checkRepeat();
     checkVcoShapes();
     checkExtremes();

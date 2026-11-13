@@ -7,16 +7,21 @@
 namespace ParamIDs
 {
 inline constexpr const char* input       = "input";
-inline constexpr const char* range       = "range";
-inline constexpr const char* step        = "step";
-inline constexpr const char* delayFactor = "delayFactor";
-inline constexpr const char* vcoDepth    = "vcoDepth";
-inline constexpr const char* vcoRate     = "vcoRate";
-inline constexpr const char* vcoShape    = "vcoShape";
-inline constexpr const char* feedback    = "feedback";
 inline constexpr const char* repeat      = "repeat";
-inline constexpr const char* mix         = "mix";
-inline constexpr const char* memory      = "memory";
+inline constexpr const char* program     = "program";     // Manual / Auto
+inline constexpr const char* scale       = "scale";       // x1 / x2 / x4
+inline constexpr const char* select      = "select";      // 0..7 inside the scale window
+inline constexpr const char* feedback    = "feedback";    // 0..1
+inline constexpr const char* fbPhase     = "fbPhase";     // regeneration phase out (inverted)
+inline constexpr const char* loEq        = "loEq";        // regeneration LO-EQ cut (175 Hz)
+inline constexpr const char* hiEq        = "hiEq";        // regeneration HI-EQ cut (3.3 kHz)
+inline constexpr const char* delayFactor = "delayFactor";
+inline constexpr const char* width       = "width";
+inline constexpr const char* speed       = "speed";
+inline constexpr const char* shape       = "shape";
+inline constexpr const char* delayPhase  = "delayPhase";  // delayed signal inverted in the mix
+inline constexpr const char* mix         = "mix";         // 0 = source .. 1 = delay
+inline constexpr const char* memory      = "memory";      // external 2.5 s memory module
 inline constexpr const char* stereoMode  = "stereoMode";
 inline constexpr const char* spread      = "spread";
 inline constexpr const char* character   = "character";
@@ -62,6 +67,8 @@ public:
     // Read by the editor for the displays.
     std::atomic<float> displayDelayMs { 0.0f };
     std::atomic<float> inputPeak { 0.0f };
+    std::atomic<float> slewPeak { 0.0f };  // input slope, 1.0 = slew limiting (approximate)
+    std::atomic<int> displayTap { 0 };   // tap in use, also while AUTO steps
 
     bool isMemoryExpanded() const { return engineExpanded.load(); }
 
@@ -80,6 +87,9 @@ private:
     vdc::AdmDelayEngine unitB { holdfast::makeConfig (false) };
     std::atomic<bool> engineExpanded { false };
     double currentSampleRate = 48000.0;
+    double lastLfoPhase = 0.0;   // AUTO program: one step per modulator cycle, in sync with the VCO
+    long long autoSteps = 0;
+    float lastInput = 0.0f;      // for the SLEW meter
     juce::AudioBuffer<float> scratch;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HoldfastProcessor)

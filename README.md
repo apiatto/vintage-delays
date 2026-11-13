@@ -71,36 +71,39 @@ seguendo lo schema a blocchi del manuale originale.
 
 ## Holdfast 512
 
-Delay digitale ADM mono ispirato a un rack del 1980 da 1-512 ms: passi di ritardo fissi in tre range,
-un Delay Factor ×0,25–×1 per accordare fra un passo e l'altro, un VCO con forma d'onda continua
-da triangolo a sinusoide a quadra, feedback, repeat/hold infinito ed espansione di memoria fino a 2 s.
-Usa lo stesso motore della Slopebox con un'altra configurazione: banda 15 kHz, memoria 128K celle
-a 256 kHz (512 ms a ×1), nessuno stereo sintetizzato (l'originale era mono).
+Delay digitale mono ispirato a un rack del 1980 da 1-512 ms, seguendo il manuale originale: dieci prese
+a ottave, SCALE e SELECT per sceglierle, AUTO che le fa scorrere a tempo con il VCO, rigenerazione con EQ
+e fase commutabili, un VCO con forma continua da triangolo a sinusoide a quadra, repeat senza perdita e
+memoria esterna da 2,5 s. Usa lo stesso motore della Slopebox con un'altra configurazione: banda 15 kHz,
+memoria 128K celle a 256 kHz (512 ms a ×1), nessuno stereo sintetizzato (l'originale era mono).
+Pannello disegnato in codice, senza loghi o nomi di marchi.
 
-**Valori stimati, da verificare sul manuale originale:** i passi di ogni range (ora 2/4/8, 16/32/64,
-128/256/512 ms a ×1), la frequenza del clock, la pre-enfasi e il filtro del feedback.
+**Stimati (il manuale non ha la pagina delle specifiche):** frequenza del clock, pre-enfasi, soglia del
+LED SLEW e come il modulo di memoria esterno si mappa sulle prese (qui la presa più lunga arriva a 2,5 s).
 
 | Controllo | Cosa fa |
 |-----------|---------|
-| Level | Guadagno d'ingresso e di sistema, −24/+26 dB; LED LIMIT a 0 dBFS, SIGNAL sopra −20 dB. |
-| Range / Step | Tre range (Short, Medium, Long) con tre passi ciascuno; i pulsanti mostrano i ms a ×1. |
-| Delay Factor | ×0,25 – ×1: ritardo reale = passo × fattore. Cambia anche l'intonazione, come sull'hardware. |
-| Mem x4 | Espansione di memoria: il range Long diventa 512/1024/2048 ms e il repeat dura 2 s. |
-| Repeat | Stacca l'ingresso e fa girare l'intera memoria su se stessa, senza degrado. |
-| Depth | Quanto il VCO prende il posto del Delay Factor; al 100% copre l'intero range 4:1. |
-| Rate | Velocità del VCO, 0,05 – 12 Hz. |
+| Input + Headroom | Livello d'ingresso (−24/+26 dB). LED PEAK e SLEW a 0/10/20/40 dB; 0 dB = inizio di clipping o slew limiting, con 6 dB di margine. |
+| Repeat | ON stacca l'ingresso e fa girare l'intera memoria su se stessa, senza perdita. |
+| Delay Manual/Auto | MANUAL: presa scelta con SELECT. AUTO: le prese della finestra scorrono su e giù, un passo per ciclo del VCO (Speed). |
+| Scale | 1X: prese 1-128 ms, 2X: 2-256 ms, 4X: 4-512 ms. |
+| Select | Levetta a ritorno: sinistra accorcia, destra allunga, dentro la finestra della Scale. Si può anche cliccare un LED. |
+| LO / HI EQ | Solo nel feedback: CUT taglia sotto 175 Hz / sopra 3,3 kHz. |
+| Feedback + Phase | Rigenerazione da 0 a poco sotto l'autooscillazione, in fase (IN) o in controfase (OUT). |
+| Delay Factor | ×0,25 – ×1: ritardo reale = presa × fattore. Cambia anche l'intonazione, come sull'hardware. |
+| Width | Profondità del VCO; al massimo copre tutto il range 4:1, sotto il massimo il Delay Factor fa da centro. |
+| Speed | Velocità del VCO, 0,05 – 10 Hz; in AUTO è il clock dei passi. |
 | Shape | Forma del VCO: triangolo, sinusoide, quadra e tutte le forme intermedie. |
-| Pedal | Simula il pedale di controllo: se attivo, sostituisce il Delay Factor. |
-| Feedback | Al centro nessuna rigenerazione; a destra in fase, a sinistra in controfase. |
-| Delay Mix | −100% solo ritardato in controfase, centro solo sorgente, +100% solo ritardato. |
-| Mono / Linked Pair | Linked Pair usa due unità, una per lato, come due rack accoppiati per lo stereo. |
-| Spread | In Linked Pair, sfasa Delay Factor e Rate dell'unità destra. |
-| Vintage | 100% = conversione ADM completa, 0% = memoria "pulita". |
-| Trim | Livello d'uscita del plugin. |
+| Delay Phase + Mix | Polarità del ritardato e miscela da SOURCE a DELAY. |
+| Memory INT/EXT | EXT simula il modulo di memoria esterno da 2,5 s. |
+| Pedal | Simula il pedale del VCO (ingresso 0-10 V): se ON sostituisce il Delay Factor. |
+| Stereo + Spread | Linked Pair usa due unità, una per lato; Spread sfasa Delay Factor e Speed dell'unità destra. |
+| Vintage, Out Level | Quantità di conversione ADM (0% = memoria pulita) e livello d'uscita del plugin. |
 
-Controlli offline: `ctest` esegue `holdfast_test`, che verifica che ogni passo cada al tempo nominale
-a ×1 e ×0,25 (memoria normale ed espansa), che il repeat non decada, che il VCO copra il range 4:1 e
-che le impostazioni estreme restino stabili. `holdfast_test --render` scrive anche delle demo WAV.
+Controlli offline: `ctest` esegue `holdfast_test`, che verifica che ogni presa cada al tempo nominale
+a ×1 e ×0,25 (memoria interna ed esterna), il percorso dell'AUTO, che il repeat non decada, che il VCO
+copra il range 4:1 e che le impostazioni estreme restino stabili. `holdfast_test --render` scrive anche
+delle demo WAV con le impostazioni consigliate dal manuale.
 
 ## Build
 

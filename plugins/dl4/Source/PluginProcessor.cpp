@@ -22,34 +22,39 @@ juce::AudioProcessorValueTreeState::ParameterLayout HoldfastProcessor::createLay
     using APF = AudioParameterFloat;
     using APC = AudioParameterChoice;
     using APB = AudioParameterBool;
+    using APInt = AudioParameterInt;
 
     auto pct = [] (float v, int) { return String (roundToInt (v * 100.0f)) + " %"; };
     auto db = [] (float v, int) { return String (v, 1) + " dB"; };
-    auto bipolarPct = [] (float v, int) { return (v > 0 ? "+" : "") + String (roundToInt (v * 100.0f)) + " %"; };
 
     AudioProcessorValueTreeState::ParameterLayout layout;
 
     layout.add (std::make_unique<APF> (ParameterID { ParamIDs::input, 1 }, "Input Level",
         NormalisableRange<float> (-24.0f, 26.0f, 0.1f), 0.0f, AudioParameterFloatAttributes().withStringFromValueFunction (db)));
 
-    layout.add (std::make_unique<APC> (ParameterID { ParamIDs::range, 1 }, "Delay Range",
-        StringArray { "Short", "Medium", "Long" }, 1));
-    layout.add (std::make_unique<APC> (ParameterID { ParamIDs::step, 1 }, "Delay Step",
-        StringArray { "1", "2", "3" }, 1));
+    layout.add (std::make_unique<APB> (ParameterID { ParamIDs::repeat, 1 }, "Repeat", false));
+    layout.add (std::make_unique<APC> (ParameterID { ParamIDs::program, 1 }, "Program Delay", StringArray { "Manual", "Auto" }, 0));
+    layout.add (std::make_unique<APC> (ParameterID { ParamIDs::scale, 1 }, "Scale", StringArray { "x1", "x2", "x4" }, 1));
+    layout.add (std::make_unique<APInt> (ParameterID { ParamIDs::select, 1 }, "Select", 0, holdfast::kWindow - 1, 4));
+
+    layout.add (std::make_unique<APF> (ParameterID { ParamIDs::feedback, 1 }, "Feedback",
+        NormalisableRange<float> (0.0f, 1.0f), 0.0f, AudioParameterFloatAttributes().withStringFromValueFunction (pct)));
+    layout.add (std::make_unique<APB> (ParameterID { ParamIDs::fbPhase, 1 }, "Feedback Phase Out", false));
+    layout.add (std::make_unique<APB> (ParameterID { ParamIDs::loEq, 1 }, "Lo EQ Cut", false));
+    layout.add (std::make_unique<APB> (ParameterID { ParamIDs::hiEq, 1 }, "Hi EQ Cut", false));
 
     layout.add (std::make_unique<APF> (ParameterID { ParamIDs::delayFactor, 1 }, "Delay Factor",
         NormalisableRange<float> (0.25f, 1.0f, 0.001f), 1.0f,
         AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) { return "x" + String (v, 2); })));
-
-    layout.add (std::make_unique<APF> (ParameterID { ParamIDs::vcoDepth, 1 }, "VCO Depth",
+    layout.add (std::make_unique<APF> (ParameterID { ParamIDs::width, 1 }, "Width",
         NormalisableRange<float> (0.0f, 1.0f), 0.0f, AudioParameterFloatAttributes().withStringFromValueFunction (pct)));
 
-    NormalisableRange<float> rateRange (0.05f, 12.0f);
-    rateRange.setSkewForCentre (1.0f);
-    layout.add (std::make_unique<APF> (ParameterID { ParamIDs::vcoRate, 1 }, "VCO Rate", rateRange, 0.5f,
+    NormalisableRange<float> speedRange (0.05f, 10.0f);
+    speedRange.setSkewForCentre (1.0f);
+    layout.add (std::make_unique<APF> (ParameterID { ParamIDs::speed, 1 }, "Speed", speedRange, 0.5f,
         AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) { return String (v, 2) + " Hz"; })));
 
-    layout.add (std::make_unique<APF> (ParameterID { ParamIDs::vcoShape, 1 }, "VCO Shape",
+    layout.add (std::make_unique<APF> (ParameterID { ParamIDs::shape, 1 }, "Shape",
         NormalisableRange<float> (0.0f, 1.0f), 0.5f,
         AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int)
         {
@@ -59,24 +64,20 @@ juce::AudioProcessorValueTreeState::ParameterLayout HoldfastProcessor::createLay
             return String (v < 0.5f ? "Tri/Sine " : "Sine/Sq ") + String (roundToInt (v * 100.0f));
         })));
 
-    layout.add (std::make_unique<APF> (ParameterID { ParamIDs::feedback, 1 }, "Feedback",
-        NormalisableRange<float> (-1.0f, 1.0f), 0.0f, AudioParameterFloatAttributes().withStringFromValueFunction (bipolarPct)));
-
-    layout.add (std::make_unique<APB> (ParameterID { ParamIDs::repeat, 1 }, "Repeat Hold", false));
-
-    layout.add (std::make_unique<APF> (ParameterID { ParamIDs::mix, 1 }, "Delay Mix",
-        NormalisableRange<float> (-1.0f, 1.0f), 0.5f,
+    layout.add (std::make_unique<APB> (ParameterID { ParamIDs::delayPhase, 1 }, "Delay Phase Out", false));
+    layout.add (std::make_unique<APF> (ParameterID { ParamIDs::mix, 1 }, "Mix",
+        NormalisableRange<float> (0.0f, 1.0f), 0.5f,
         AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int)
         {
-            if (std::abs (v) < 0.005f) return String ("Source");
-            return (v > 0 ? "+" : "") + String (roundToInt (v * 100.0f)) + " %";
+            if (v < 0.005f) return String ("Source");
+            if (v > 0.995f) return String ("Delay");
+            return String (roundToInt (v * 100.0f)) + " % delay";
         })));
 
-    layout.add (std::make_unique<APB> (ParameterID { ParamIDs::memory, 1 }, "Memory Expansion", false));
+    layout.add (std::make_unique<APB> (ParameterID { ParamIDs::memory, 1 }, "External Memory", false));
 
     layout.add (std::make_unique<APC> (ParameterID { ParamIDs::stereoMode, 1 }, "Stereo Mode",
         StringArray { "Mono", "Linked Pair" }, 0));
-
     layout.add (std::make_unique<APF> (ParameterID { ParamIDs::spread, 1 }, "Pair Spread",
         NormalisableRange<float> (0.0f, 1.0f), 0.3f, AudioParameterFloatAttributes().withStringFromValueFunction (pct)));
 
@@ -87,7 +88,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout HoldfastProcessor::createLay
     layout.add (std::make_unique<APF> (ParameterID { ParamIDs::pedal, 1 }, "Pedal",
         NormalisableRange<float> (0.0f, 1.0f), 0.0f, AudioParameterFloatAttributes().withStringFromValueFunction (pct)));
 
-    layout.add (std::make_unique<APF> (ParameterID { ParamIDs::output, 1 }, "Output Trim",
+    layout.add (std::make_unique<APF> (ParameterID { ParamIDs::output, 1 }, "Output Level",
         NormalisableRange<float> (-24.0f, 12.0f, 0.1f), 0.0f, AudioParameterFloatAttributes().withStringFromValueFunction (db)));
 
     return layout;
@@ -96,22 +97,25 @@ juce::AudioProcessorValueTreeState::ParameterLayout HoldfastProcessor::createLay
 vdc::Params HoldfastProcessor::readParams() const
 {
     auto get = [this] (const char* id) { return apvts.getRawParameterValue (id)->load(); };
+    auto on = [&] (const char* id) { return get (id) > 0.5f; };
 
     vdc::Params p;
     p.inputDb = get (ParamIDs::input);
-    const int range = juce::jlimit (0, holdfast::kNumRanges - 1, juce::roundToInt (get (ParamIDs::range)));
-    const int step = juce::jlimit (0, holdfast::kStepsPerRange - 1, juce::roundToInt (get (ParamIDs::step)));
-    p.tap = holdfast::tapIndex (range, step);
+    const int scale = juce::jlimit (0, holdfast::kNumScales - 1, juce::roundToInt (get (ParamIDs::scale)));
+    const int select = juce::jlimit (0, holdfast::kWindow - 1, juce::roundToInt (get (ParamIDs::select)));
+    p.tap = holdfast::tapIndex (scale, select);
     p.delayFactor = get (ParamIDs::delayFactor);
-    p.width = get (ParamIDs::vcoDepth);
-    p.speedHz = get (ParamIDs::vcoRate);
+    p.width = get (ParamIDs::width);
+    p.speedHz = get (ParamIDs::speed);
     p.modSource = vdc::ModSource::Shape;
-    p.shapeMorph = get (ParamIDs::vcoShape);
-    p.useExternalControl = get (ParamIDs::pedalOn) > 0.5f;
+    p.shapeMorph = get (ParamIDs::shape);
+    p.useExternalControl = on (ParamIDs::pedalOn);
     p.externalControl = get (ParamIDs::pedal);
-    p.feedback = get (ParamIDs::feedback);
-    p.repeat = get (ParamIDs::repeat) > 0.5f;
-    p.mix = get (ParamIDs::mix);
+    p.feedback = get (ParamIDs::feedback) * (on (ParamIDs::fbPhase) ? -1.0f : 1.0f);
+    p.feedbackLowCut = on (ParamIDs::loEq);
+    p.feedbackHighCut = on (ParamIDs::hiEq);
+    p.repeat = on (ParamIDs::repeat);
+    p.mix = get (ParamIDs::mix) * (on (ParamIDs::delayPhase) ? -1.0f : 1.0f);
     p.stereo = 0.0f;
     p.character = get (ParamIDs::character);
     p.outputDb = get (ParamIDs::output);
@@ -174,13 +178,48 @@ void HoldfastProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
     if (scratch.getNumSamples() < numSamples)
         scratch.setSize (4, numSamples, false, false, true);
 
-    const auto params = readParams();
+    auto params = readParams();
+
+    // PROGRAM DELAY AUTO: step through the taps of the SCALE window, one step each time the
+    // modulator completes a cycle, so the steps stay in time with the VCO sweep.
+    const bool autoProgram = juce::roundToInt (apvts.getRawParameterValue (ParamIDs::program)->load()) == 1;
+    const double lfoPhase = unitA.getLfoPhase();
+    if (autoProgram)
+    {
+        if (lfoPhase < lastLfoPhase)
+            ++autoSteps;
+        const int scale = juce::jlimit (0, holdfast::kNumScales - 1,
+                                        juce::roundToInt (apvts.getRawParameterValue (ParamIDs::scale)->load()));
+        params.tap = holdfast::tapIndex (scale, holdfast::autoSelect (autoSteps));
+    }
+    else
+    {
+        autoSteps = juce::roundToInt (apvts.getRawParameterValue (ParamIDs::select)->load());
+    }
+    lastLfoPhase = lfoPhase;
+    displayTap.store (params.tap);
+
     const bool linked = juce::roundToInt (apvts.getRawParameterValue (ParamIDs::stereoMode)->load()) == 1;
 
     if (numIn == 0)
         scratch.clear();
     const float* inL = numIn > 0 ? buffer.getReadPointer (0) : scratch.getReadPointer (3);
     const float* inR = numIn > 1 ? buffer.getReadPointer (1) : inL;
+
+    // SLEW meter: steepest input slope after the input gain, relative to a full-scale 4 kHz sine
+    // (an approximation of where the delta modulator starts to slew-limit).
+    {
+        const float gain = juce::Decibels::decibelsToGain (params.inputDb);
+        const float ref = (float) (2.0 * juce::MathConstants<double>::pi * 4000.0 / currentSampleRate);
+        float maxStep = 0.0f;
+        for (int i = 0; i < numSamples; ++i)
+        {
+            const float x = 0.5f * (inL[i] + inR[i]) * gain;
+            maxStep = std::max (maxStep, std::abs (x - lastInput));
+            lastInput = x;
+        }
+        slewPeak.store (std::max (maxStep / ref, slewPeak.load() * 0.85f));
+    }
 
     float* aL = scratch.getWritePointer (0);
     float* aR = scratch.getWritePointer (1);

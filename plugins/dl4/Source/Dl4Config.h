@@ -1,16 +1,20 @@
-// Holdfast 512: configuration of the shared ADM engine, after a 1980 single-channel
-// ADM digital delay rack (1-512 ms, three ranges of stepped delays plus a 4:1 sweep).
+// Holdfast 512: configuration of the shared ADM engine, after a 1980 single-channel ADM digital
+// delay rack (owner's manual of the 1-512 ms "time line" unit, derived from an earlier ADM delay).
 //
-// Public specifications this follows:
-//   * mono, 1 to 512 ms, discrete steps in three ranges, continuous x0.25..x1 tuning between steps
-//   * 20 Hz - 15 kHz (+1/-3 dB) at every delay, 90-95 dB dynamic range, +6 dB headroom
-//   * THD+N 0.2 % at x0.25 and 0.4 % at x1: distortion rises as the clock slows, as in ADM
-//   * VCO 0 to >10 Hz, depth 0-100 % of the 4:1 range, shape continuous triangle -> sine -> square
-//   * feedback, infinite repeat/hold, optional memory expansion up to 2 s
+// From the manual:
+//   * ten memory taps: 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 ms at delay factor x1, grouped as
+//     FLANGE (1-8), DOUBLE (16-64) and ECHO (128-512)
+//   * SCALE x1/x2/x4 picks a window of eight taps (1-128, 2-256, 4-512 ms); SELECT steps up/down
+//   * PROGRAM DELAY AUTO steps through the taps at the modulator SPEED ("auto flange", "arpeggio")
+//   * DELAY FACTOR 0.25-1.0 (4:1), WIDTH up to the full two octaves, SPEED to about 10 Hz,
+//     SHAPE continuous triangle -> sine -> square
+//   * regeneration through switchable LO-EQ (175 Hz cut) and HI-EQ (3.3 kHz cut), PHASE in/out
+//   * REPEAT recirculates the memory without loss; optional external memory module, 2.5 s
+//   * +6 dB of headroom above the 0 dB (clip / slew) point
 //
-// ESTIMATED (to check against the owner's manual): the exact steps of each range, the clock
-// frequency, the pre-emphasis and the feedback filter. Steps are assumed to double, three per
-// range: 2/4/8, 16/32/64 and 128/256/512 ms at x1 (0.5 ms to 512 ms with the sweep).
+// Not in the manual (no specification page), taken from published data of the unit:
+// 20 Hz - 15 kHz bandwidth at every delay, 90-95 dB dynamic range. The clock frequency and the
+// pre-emphasis are estimates.
 
 #pragma once
 
@@ -21,47 +25,59 @@
 namespace holdfast
 {
 
-constexpr int kNumRanges = 3;
-constexpr int kStepsPerRange = 3;
-constexpr int kNumTaps = kNumRanges * kStepsPerRange;
+constexpr int kNumTaps = 10;    // 1 .. 512 ms
+constexpr int kNumScales = 3;   // x1, x2, x4
+constexpr int kWindow = 8;      // taps reachable with one SCALE setting
 
 constexpr double kClockAtX1 = 256000.0;
-constexpr int kCellsStandard = 131072;     // 512 ms at x1
-constexpr int kCellsExpanded = 4 * 131072; // 2048 ms at x1 with the memory expansion
+constexpr int kCellsStandard = 131072;   // 512 ms at x1
+constexpr int kCellsExtended = 640000;   // 2.5 s at x1 with the external memory module
+constexpr double kExtendedMs = 2500.0;
 
-inline const char* rangeName (int range)
+// Nominal delay in ms at x1 of each tap. With the external module the longest tap reaches the end
+// of the 2.5 s memory (the manual gives the module's length, not how it maps onto the taps).
+inline std::array<double, kNumTaps> tapMs (bool extended)
 {
-    static const char* names[kNumRanges] = { "SHORT", "MEDIUM", "LONG" };
-    return names[range];
+    return { 1, 2, 4, 8, 16, 32, 64, 128, 256, extended ? kExtendedMs : 512.0 };
 }
 
-// Nominal delay in ms at x1 for each tap, standard and expanded memory.
-inline std::array<int, kNumTaps> tapMs (bool expanded)
+inline const char* scaleName (int scale)
 {
-    if (expanded)
-        return { 2, 4, 8, 16, 32, 64, 512, 1024, 2048 };
-    return { 2, 4, 8, 16, 32, 64, 128, 256, 512 };
+    static const char* names[kNumScales] = { "x1", "x2", "x4" };
+    return names[scale];
 }
 
-inline int tapIndex (int range, int step) { return range * kStepsPerRange + step; }
+// SCALE (0..2) and SELECT (0..7) to the tap index (0..9).
+inline int tapIndex (int scale, int select) { return scale + select; }
 
-inline vdc::EngineConfig makeConfig (bool expandedMemory)
+inline vdc::EngineConfig makeConfig (bool extendedMemory)
 {
     vdc::EngineConfig c;
-    c.cells = expandedMemory ? kCellsExpanded : kCellsStandard;
+    c.cells = extendedMemory ? kCellsExtended : kCellsStandard;
     c.clockAtX1 = kClockAtX1;
     c.vcoRatio = 4.0;
     c.tapCells.clear();
-    for (int ms : tapMs (expandedMemory))
-        c.tapCells.push_back ((int) (ms * kClockAtX1 / 1000.0));
+    for (double ms : tapMs (extendedMemory))
+        c.tapCells.push_back ((int) (ms * kClockAtX1 / 1000.0 + 0.5));
     c.bandwidthHz = 15000.0;
     c.feedbackLowpassHz = 12000.0;
+    c.feedbackLowCutHz = 175.0;    // LO-EQ CUT
+    c.feedbackHighCutHz = 3300.0;  // HI-EQ CUT
     c.preEmphasisZero = 50.0e-6;
     c.preEmphasisPole = 15.0e-6;
     c.syntheticStereo = false;  // single-channel unit; stereo comes from two linked units
-    c.modulatorSwing = 0.5;     // 100 % depth = exactly the 4:1 range
-    c.feedbackMax = 0.97;
+    c.modulatorSwing = 0.5;     // WIDTH max = exactly the 4:1 (two octave) range
+    c.feedbackMax = 0.97;       // "just below self-oscillation"
     return c;
+}
+
+// AUTO program: steps up and down through the eight taps of the SCALE window, one step per
+// modulator cycle. Returns the SELECT position (0..7) for a running step count.
+inline int autoSelect (long long stepCount)
+{
+    const int period = 2 * (kWindow - 1);
+    const int pos = (int) (stepCount % period);
+    return pos < kWindow ? pos : period - pos;
 }
 
 } // namespace holdfast

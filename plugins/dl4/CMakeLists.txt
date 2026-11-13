@@ -16,7 +16,8 @@ juce_add_plugin(Holdfast
 
 target_sources(Holdfast PRIVATE
     Source/PluginProcessor.cpp
-    Source/PluginEditor.cpp)
+    Source/PluginEditor.cpp
+    Source/PanelStyle.h)
 
 target_compile_definitions(Holdfast PUBLIC
     JUCE_WEB_BROWSER=0
