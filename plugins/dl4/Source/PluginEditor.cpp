@@ -126,6 +126,25 @@ int HoldfastEditor::getInt (const char* paramId) const
 
 void HoldfastEditor::mouseDown (const juce::MouseEvent& e)
 {
+    // Clicking a lever's printed legend (e.g. "4X 512" above SCALE) sets the lever there.
+    for (auto* l : { &repeatLever, &programLever, &scaleLever, &loLever, &hiLever, &fbPhaseLever,
+                     &delayPhaseLever, &memoryLever, &pedalLever })
+    {
+        const auto b = l->getBounds().toFloat();
+        const juce::Rectangle<float> top (b.getX() - 14.0f, b.getY() - 15.0f, b.getWidth() + 28.0f, 15.0f);
+        const juce::Rectangle<float> bottom (b.getX() - 14.0f, b.getBottom(), b.getWidth() + 28.0f, 15.0f);
+        if (top.contains (e.position)) { l->selectPosition (0); return; }
+        if (bottom.contains (e.position)) { l->selectPosition (l->getNumPositions() - 1); return; }
+    }
+    {
+        const auto sb = scaleLever.getBounds().toFloat();
+        if (juce::Rectangle<float> (sb.getRight(), sb.getCentreY() - 8.0f, 40.0f, 16.0f).contains (e.position))
+        {
+            scaleLever.selectPosition (1); // "2X 256"
+            return;
+        }
+    }
+
     // Clicking a tap LED inside the SCALE window selects it (a shortcut for the SELECT lever).
     if (getInt (ParamIDs::program) != 0)
         return;

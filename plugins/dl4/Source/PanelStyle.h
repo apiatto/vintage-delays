@@ -130,6 +130,7 @@ public:
         : positions (numPositions), isHorizontal (horizontal), isMomentary (momentary)
     {
         if (momentary) position = 1;
+        setMouseCursor (juce::MouseCursor::PointingHandCursor);
     }
 
     void attach (juce::RangedAudioParameter& param, std::function<int (float)> toPosition,
@@ -178,6 +179,15 @@ public:
         g.fillEllipse (tip.x - 4.0f, tip.y - 4.0f, 8.0f, 8.0f);
     }
 
+    // Sets the lever from outside (a click on one of its printed legends).
+    void selectPosition (int p)
+    {
+        if (! isMomentary)
+            setPosition (juce::jlimit (0, positions - 1, p));
+    }
+
+    int getNumPositions() const { return positions; }
+
     void mouseDown (const juce::MouseEvent& e) override
     {
         const float along = isHorizontal ? e.position.x / (float) getWidth() : e.position.y / (float) getHeight();
@@ -188,8 +198,28 @@ public:
             if (onFlick) onFlick (along < 0.5f ? -1 : 1);
             return;
         }
-        int target = positions == 2 ? (position == 0 ? 1 : 0) : juce::jlimit (0, positions - 1, (int) (along * positions));
-        setPosition (target);
+        dragStartPosition = position;
+        dragged = false;
+        if (positions == 2)
+            setPosition (position == 0 ? 1 : 0);
+        else
+            // Three positions: a click anywhere in the upper (left) half moves one step up (left),
+            // in the lower half one step down, so the small lever never needs an exact hit.
+            setPosition (juce::jlimit (0, positions - 1, position + (along < 0.5f ? -1 : 1)));
+    }
+
+    void mouseDrag (const juce::MouseEvent& e) override
+    {
+        if (isMomentary || positions < 3)
+            return;
+        // Dragging also works: one step every 12 px, starting from where the lever was.
+        const float d = isHorizontal ? (float) e.getDistanceFromDragStartX() : (float) e.getDistanceFromDragStartY();
+        if (std::abs (d) < 6.0f && ! dragged)
+            return;
+        dragged = true;
+        const int target = juce::jlimit (0, positions - 1, dragStartPosition + juce::roundToInt (d / 12.0f));
+        if (target != position)
+            setPosition (target);
     }
 
     void mouseUp (const juce::MouseEvent&) override
@@ -199,6 +229,22 @@ public:
             position = 1;
             repaint();
         }
+    }
+
+    void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails& w) override
+    {
+        const float amount = std::abs (w.deltaY) > std::abs (w.deltaX) ? w.deltaY : -w.deltaX;
+        if (std::abs (amount) < 0.01f)
+            return;
+        const int step = amount > 0 ? -1 : 1; // wheel up = lever up
+        if (isMomentary)
+        {
+            if (onFlick) onFlick (step);
+            return;
+        }
+        const int target = juce::jlimit (0, positions - 1, position + step);
+        if (target != position)
+            setPosition (target);
     }
 
 private:
@@ -213,6 +259,8 @@ private:
     int positions;
     bool isHorizontal, isMomentary;
     int position = 0;
+    int dragStartPosition = 0;
+    bool dragged = false;
     std::function<int (float)> valueToPosition;
     std::function<float (int)> positionToValue;
     std::unique_ptr<juce::ParameterAttachment> attachment;
