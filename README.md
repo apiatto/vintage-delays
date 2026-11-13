@@ -16,6 +16,9 @@ plugins/slopebox/             Slopebox 1024 (ADM, memoria da 1024 ms, flanger/ec
   Source/SlopeboxConfig.h       configurazione del motore per questo modello
   tools/render.cpp              render offline e test di regressione
   tests/reference_levels.txt    livelli di riferimento del test
+plugins/dl4/                  Holdfast 512 (ADM, 1-512 ms a passi, VCO a forma variabile)
+  Source/Dl4Config.h            configurazione del motore per questo modello
+  tools/dl4_test.cpp            controlli offline (tempi dei passi, repeat, VCO) e demo audio
 plugins/<altro>/              ogni nuovo plugin ha la sua cartella con CMakeLists.txt
 ```
 
@@ -67,6 +70,42 @@ seguendo lo schema a blocchi del manuale originale.
 | Stereo | Quantità di stereo sintetizzato sull'uscita destra. |
 | Vintage | 100% = conversione ADM completa, 0% = stessa catena con memoria "pulita". |
 | Trim | Livello d'uscita del plugin. |
+
+## Holdfast 512
+
+Delay digitale mono ispirato a un rack del 1980 da 1-512 ms, seguendo il manuale originale: dieci prese
+a ottave, SCALE e SELECT per sceglierle, AUTO che le fa scorrere a tempo con il VCO, rigenerazione con EQ
+e fase commutabili, un VCO con forma continua da triangolo a sinusoide a quadra, repeat senza perdita e
+memoria esterna da 2,5 s. Usa lo stesso motore della Slopebox con un'altra configurazione: banda 15 kHz,
+memoria 128K celle a 256 kHz (512 ms a ×1), nessuno stereo sintetizzato (l'originale era mono).
+Pannello disegnato in codice, senza loghi o nomi di marchi.
+
+**Stimati (il manuale non ha la pagina delle specifiche):** frequenza del clock, pre-enfasi, soglia del
+LED SLEW e come il modulo di memoria esterno si mappa sulle prese (qui la presa più lunga arriva a 2,5 s).
+
+| Controllo | Cosa fa |
+|-----------|---------|
+| Input + Headroom | Livello d'ingresso (−24/+26 dB). LED PEAK e SLEW a 0/10/20/40 dB; 0 dB = inizio di clipping o slew limiting, con 6 dB di margine. |
+| Repeat | ON stacca l'ingresso e fa girare l'intera memoria su se stessa, senza perdita. |
+| Delay Manual/Auto | MANUAL: presa scelta con SELECT. AUTO: le prese della finestra scorrono su e giù, un passo per ciclo del VCO (Speed). |
+| Scale | 1X: prese 1-128 ms, 2X: 2-256 ms, 4X: 4-512 ms. |
+| Select | Levetta a ritorno: sinistra accorcia, destra allunga, dentro la finestra della Scale. Si può anche cliccare un LED. |
+| LO / HI EQ | Solo nel feedback: CUT taglia sotto 175 Hz / sopra 3,3 kHz. |
+| Feedback + Phase | Rigenerazione da 0 a poco sotto l'autooscillazione, in fase (IN) o in controfase (OUT). |
+| Delay Factor | ×0,25 – ×1: ritardo reale = presa × fattore. Cambia anche l'intonazione, come sull'hardware. |
+| Width | Profondità del VCO; al massimo copre tutto il range 4:1, sotto il massimo il Delay Factor fa da centro. |
+| Speed | Velocità del VCO, 0,05 – 10 Hz; in AUTO è il clock dei passi. |
+| Shape | Forma del VCO: triangolo, sinusoide, quadra e tutte le forme intermedie. |
+| Delay Phase + Mix | Polarità del ritardato e miscela da SOURCE a DELAY. |
+| Memory INT/EXT | EXT simula il modulo di memoria esterno da 2,5 s. |
+| Pedal | Simula il pedale del VCO (ingresso 0-10 V): se ON sostituisce il Delay Factor. |
+| Stereo + Spread | Linked Pair usa due unità, una per lato; Spread sfasa Delay Factor e Speed dell'unità destra. |
+| Vintage, Out Level | Quantità di conversione ADM (0% = memoria pulita) e livello d'uscita del plugin. |
+
+Controlli offline: `ctest` esegue `holdfast_test`, che verifica che ogni presa cada al tempo nominale
+a ×1 e ×0,25 (memoria interna ed esterna), il percorso dell'AUTO, che il repeat non decada, che il VCO
+copra il range 4:1 e che le impostazioni estreme restino stabili. `holdfast_test --render` scrive anche
+delle demo WAV con le impostazioni consigliate dal manuale.
 
 ## Build
 
