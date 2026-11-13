@@ -2,8 +2,16 @@ name: build
 
 on:
   push:
+    paths-ignore: ['docs/**', '**/*.md', 'plugins/*/calibration/**']
   pull_request:
+    paths-ignore: ['docs/**', '**/*.md', 'plugins/*/calibration/**']
   workflow_dispatch:
+
+# macOS builds are done locally on the Mac Studio (macOS runner minutes cost 10x on a
+# private repo). A newer push to the same branch or PR cancels the older run.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -11,8 +19,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-15
-            name: macOS
           - os: windows-2022
             name: Windows
     runs-on: ${{ matrix.os }}
