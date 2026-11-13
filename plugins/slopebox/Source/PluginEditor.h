@@ -28,7 +28,7 @@ private:
     void parameterChanged (const juce::String& id, float value) override;
     void updateTapButtons();
 
-    SlopeboxProcessor& processor;
+    SlopeboxProcessor& proc;
     vdc::ui::RackLookAndFeel lnf;
 
     Knob input, feedback, delayFactor, width, speed, mix, stereo, character, output;

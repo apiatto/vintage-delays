@@ -9,7 +9,7 @@ const char* tapMs[6] = { "1", "4", "16", "64", "256", "1024" };
 
 //==============================================================================
 SlopeboxEditor::SlopeboxEditor (SlopeboxProcessor& p)
-    : AudioProcessorEditor (p), processor (p)
+    : AudioProcessorEditor (p), proc (p)
 {
     setLookAndFeel (&lnf);
 
@@ -30,10 +30,10 @@ SlopeboxEditor::SlopeboxEditor (SlopeboxProcessor& p)
         b.setClickingTogglesState (false);
         b.onClick = [this, i]
         {
-            if (auto* param = processor.apvts.getParameter (ParamIDs::tap))
+            if (auto* param = proc.apvts.getParameter (ParamIDs::tap))
             {
                 // Pressing the lit button releases it: all buttons out = memory bypassed.
-                const int current = juce::roundToInt (processor.apvts.getRawParameterValue (ParamIDs::tap)->load());
+                const int current = juce::roundToInt (proc.apvts.getRawParameterValue (ParamIDs::tap)->load());
                 const int next = current == i + 1 ? 0 : i + 1;
                 param->beginChangeGesture();
                 param->setValueNotifyingHost (param->convertTo0to1 ((float) next));
@@ -42,17 +42,17 @@ SlopeboxEditor::SlopeboxEditor (SlopeboxProcessor& p)
         };
         addAndMakeVisible (b);
     }
-    processor.apvts.addParameterListener (ParamIDs::tap, this);
+    proc.apvts.addParameterListener (ParamIDs::tap, this);
     updateTapButtons();
 
     repeatButton.setClickingTogglesState (true);
     addAndMakeVisible (repeatButton);
-    repeatAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (processor.apvts, ParamIDs::repeat, repeatButton);
+    repeatAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (proc.apvts, ParamIDs::repeat, repeatButton);
 
     modBox.addItemList ({ "Sine LFO", "Triangle LFO", "Envelope" }, 1);
     modBox.setJustificationType (juce::Justification::centredLeft);
     addAndMakeVisible (modBox);
-    modAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (processor.apvts, ParamIDs::modSource, modBox);
+    modAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (proc.apvts, ParamIDs::modSource, modBox);
 
     setSize (1000, 300);
     sendLookAndFeelChange();
@@ -61,7 +61,7 @@ SlopeboxEditor::SlopeboxEditor (SlopeboxProcessor& p)
 
 SlopeboxEditor::~SlopeboxEditor()
 {
-    processor.apvts.removeParameterListener (ParamIDs::tap, this);
+    proc.apvts.removeParameterListener (ParamIDs::tap, this);
     setLookAndFeel (nullptr);
 }
 
@@ -81,7 +81,7 @@ void SlopeboxEditor::setupKnob (Knob& k, const char* paramId, const juce::String
     k.label.setFont (juce::FontOptions (11.0f, juce::Font::bold));
     addAndMakeVisible (k.label);
 
-    k.attachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (processor.apvts, paramId, k.slider);
+    k.attachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (proc.apvts, paramId, k.slider);
 }
 
 void SlopeboxEditor::placeKnob (Knob& k, juce::Rectangle<int> area)
@@ -101,15 +101,15 @@ void SlopeboxEditor::parameterChanged (const juce::String&, float)
 
 void SlopeboxEditor::updateTapButtons()
 {
-    const int current = juce::roundToInt (processor.apvts.getRawParameterValue (ParamIDs::tap)->load());
+    const int current = juce::roundToInt (proc.apvts.getRawParameterValue (ParamIDs::tap)->load());
     for (int i = 0; i < 6; ++i)
         tapButtons[i].setToggleState (i + 1 == current, juce::dontSendNotification);
 }
 
 void SlopeboxEditor::timerCallback()
 {
-    const float ms = processor.displayDelayMs.load();
-    const float pk = processor.inputPeak.load();
+    const float ms = proc.displayDelayMs.load();
+    const float pk = proc.inputPeak.load();
     if (std::abs (ms - shownDelayMs) > 0.005f || std::abs (pk - shownPeak) > 0.01f)
     {
         shownDelayMs = ms;
