@@ -418,7 +418,7 @@ void SlopeboxPanel::paint (juce::Graphics& g)
 
     // MODULATOR box.
     {
-        const auto box = juce::Rectangle<float> (924.0f, 8.0f, 296.0f, 156.0f);
+        const auto box = juce::Rectangle<float> (924.0f, 8.0f, 290.0f, 156.0f);
         g.drawRect (box, 2.5f);
         g.setFont (panelFont (15.0f));
         g.drawText ("MODULATOR", box.withHeight (26.0f).translated (0.0f, 6.0f), juce::Justification::centred);
@@ -438,8 +438,8 @@ void SlopeboxPanel::paint (juce::Graphics& g)
     g.drawText ("DELAY MIX", mix.slider.getBounds().getCentreX() - 60, 140, 120, 18, juce::Justification::centred);
     drawKnobScale (g, mix, 11, 47.0f, 42.0f);
     g.setFont (panelFont (10.5f));
-    drawScaleLabel (g, mix, 0.0f, "- 100%", 66.0f);
-    drawScaleLabel (g, mix, 0.25f, "- 50%", 72.0f);
+    drawScaleLabel (g, mix, 0.0f, juce::String (juce::CharPointer_UTF8 ("\xe2\x88\x92 100%")), 66.0f);
+    drawScaleLabel (g, mix, 0.25f, juce::String (juce::CharPointer_UTF8 ("\xe2\x88\x92 50%")), 72.0f);
     drawScaleLabel (g, mix, 0.5f, "SOURCE", 56.0f);
     drawScaleLabel (g, mix, 0.75f, "+ 50%", 72.0f);
     drawScaleLabel (g, mix, 1.0f, "+ 100%", 66.0f);
@@ -504,7 +504,7 @@ void SlopeboxPanel::resized()
     delayFactor.slider.setBounds (knobAt (856, 84));
     width.slider.setBounds (juce::Rectangle<int> (78, 78).withCentre ({ 1000, 90 }));
     speed.slider.setBounds (juce::Rectangle<int> (78, 78).withCentre ({ 1144, 90 }));
-    mix.slider.setBounds (knobAt (1300, 84));
+    mix.slider.setBounds (knobAt (1306, 84));
 
     // Lower strip.
     const int sy = panelHeight + 7;
