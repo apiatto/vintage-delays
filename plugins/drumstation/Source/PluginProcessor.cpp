@@ -27,11 +27,16 @@ juce::String formatPan (int v)
 juce::String findDevice (const juce::Array<juce::MidiDeviceInfo>& devices, const juce::String& id, const juce::String& name)
 {
     for (const auto& d : devices)
-        if (d.identifier == id)
+        if (id.isNotEmpty() && d.identifier == id)
             return d.identifier;
     for (const auto& d : devices)
         if (name.isNotEmpty() && d.name == name)
             return d.identifier;
+    // Nothing chosen yet: a port named after the unit in Audio MIDI Setup (e.g. "DrumStation").
+    if (id.isEmpty() && name.isEmpty())
+        for (const auto& d : devices)
+            if (d.name.containsIgnoreCase ("drumstation") || d.name.containsIgnoreCase ("drum station"))
+                return d.identifier;
     return {};
 }
 } // namespace
