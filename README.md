@@ -73,7 +73,7 @@ seguendo lo schema a blocchi del manuale originale.
 
 Editor hardware per l'expander Novation Drum Station V2 (rack 1U, 808/909; la mappa MIDI è la stessa della prima versione), sul modello degli editor
 Aura Plugins: non produce audio, apre direttamente le porte MIDI e comanda l'unità.
-Il pannello riprende quello della V2: argento, blocco scuro con fascia arancio (disegnato in codice, senza loghi).
+Il pannello riprende quello dell'unità di Ale: nero con le fasce rosse (disegnato in codice, senza loghi).
 
 - Formati: AU (strumento, per una traccia Software Instrument di Logic), VST3, Standalone.
 - **MIDI OUT / MIDI IN**: porte scelte nella striscia sotto il pannello (es. MIDISPORT 4x4 porta D),

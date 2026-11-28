@@ -2,35 +2,33 @@
 
 namespace
 {
-// Drum Station V2 (1997) look: silver panel, dark slate data-entry block with an orange band,
-// black knobs ringed with orange dots, orange section titles, lower-case captions.
-const juce::Colour silver (0xffcbcdcf);
-const juce::Colour silverDark (0xffb4b7ba);
-const juce::Colour slate (0xff182026);
-const juce::Colour orange (0xffe8890c);
-const juce::Colour caption (0xff2e2e2e);
-const juce::Colour captionLight (0xffe6e6e6);
-const juce::Colour divider (0xff2a2a2a);
-const juce::Colour keyGrey (0xffbfc3c7);
-const juce::Colour keyText (0xff2a2a2a);
-const juce::Colour ledRed (0xffe0201a);
-const juce::Colour segOn (0xffff3214);
+const juce::Colour panelBlack (0xff111111);
+const juce::Colour earBlack (0xff0a0a0a);
+// Drum Station rack in black with red section bands (Ale's unit): grey label strips with dark
+// captions, light grey knobs, beige keys.
+const juce::Colour red (0xffd63a22);
+const juce::Colour stripText (0xff15181c);
+const juce::Colour stripGrey (0xff8e969e);
+const juce::Colour keyGrey (0xffcbc5a8);
+const juce::Colour keyText (0xff3c3c3c);
+const juce::Colour ledRed (0xffff2a1a);
+const juce::Colour segOn (0xffff2a12);
 const juce::Colour segOff (0xff3a0906);
 const juce::Colour setupBg (0xff1c1c1c);
 const juce::Colour setupText (0xffd8d8d8);
 
 constexpr float topKnobY = 50.0f, bottomKnobY = 131.0f;
 constexpr float knobSize = 62.0f, smallKnobSize = 44.0f;
-constexpr float midLabelY = 91.0f, bottomLabelY = 172.0f;
+constexpr float midStripY = 84.0f, bottomStripY = 166.0f, stripH = 13.0f;
 
 const char* sectionTitles[ds::numSections] = {
-    "Bass", "Snare", "Toms", "R'shot. H'clap. C'bell", "Hi Hat", "Cymbals", "C'ngas. M'cas. Claves"
+    "BASS DRUM", "SNARE DRUM", "TOM TOMS", "R'SHOT  H'CLAP  C'BELL", "HI HAT", "CYMBALS", "C'NGAS  M'CAS  CLAVES"
 };
 
 const char* keyCaps[12] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "-", "+" };
-const char* keyLabels[12] = { "trigger\nstart stop", "drum select", "front cut", "cont/velocity",
-                              "note-off rec", "gen midi set", "output set",
-                              "assign bank", "distortion", "demo", "save type", "save" };
+const char* keyLabels[12] = { "TRIGGER\nSTART STOP", "DRUM SELECT", "FRONT CUT", "CONT / VELOCITY",
+                              "NOTE-OFF REC", "GEN MIDI SET", "OUTPUT SET",
+                              "ASSIGN BANK", "DISTORTION", "DEMO", "SAVE TYPE\nCOMPARE", "SAVE\nWRITE" };
 // Keypad grid: row by row, as on the panel.
 const int keyGrid[4][3] = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 }, { 10, 0, 11 } };
 juce::Point<float> keyCentre (int row, int col) { return { 299.0f + (float) col * 52.5f, 32.0f + (float) row * 34.0f }; }
@@ -48,15 +46,15 @@ PanelLookAndFeel::PanelLookAndFeel()
     setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff2a2a2a));
     setColour (juce::ComboBox::textColourId, setupText);
     setColour (juce::ComboBox::outlineColourId, juce::Colour (0xff4a4a4a));
-    setColour (juce::ComboBox::arrowColourId, orange);
+    setColour (juce::ComboBox::arrowColourId, red);
     setColour (juce::PopupMenu::backgroundColourId, juce::Colour (0xff222222));
     setColour (juce::PopupMenu::textColourId, setupText);
-    setColour (juce::PopupMenu::highlightedBackgroundColourId, orange.withAlpha (0.35f));
+    setColour (juce::PopupMenu::highlightedBackgroundColourId, red.withAlpha (0.35f));
     setColour (juce::TooltipWindow::backgroundColourId, juce::Colour (0xff202020));
     setColour (juce::TooltipWindow::textColourId, setupText);
     setColour (juce::BubbleComponent::backgroundColourId, juce::Colour (0xff202020));
-    setColour (juce::BubbleComponent::outlineColourId, orange);
-    setColour (juce::TooltipWindow::outlineColourId, orange);
+    setColour (juce::BubbleComponent::outlineColourId, red);
+    setColour (juce::TooltipWindow::outlineColourId, red);
 }
 
 void PanelLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int w, int h, float pos,
@@ -64,33 +62,32 @@ void PanelLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int w,
 {
     const auto bounds = juce::Rectangle<int> (x, y, w, h).toFloat();
     const auto c = bounds.getCentre();
-    const float outer = juce::jmin (bounds.getWidth(), bounds.getHeight()) * 0.5f - 0.5f;
-    const float alpha = slider.isEnabled() ? 1.0f : 0.35f;
-    const bool volumeKnob = slider.getProperties()["volume"];
+    const float outer = juce::jmin (bounds.getWidth(), bounds.getHeight()) * 0.5f;
+    const float capR = outer * 0.62f;
+    const float alpha = slider.isEnabled() ? 1.0f : 0.3f;
 
-    // Collar: black with orange dots (orange with black dots on the master volume).
-    g.setColour ((volumeKnob ? orange : juce::Colour (0xff111111)).withAlpha (alpha));
-    g.fillEllipse (c.x - outer, c.y - outer, outer * 2.0f, outer * 2.0f);
-    g.setColour ((volumeKnob ? juce::Colour (0xff111111) : orange).withAlpha (alpha));
+    // Dotted scale, as printed around the knobs.
+    g.setColour (juce::Colours::white.withAlpha (0.9f * alpha));
     for (int i = 0; i <= 10; ++i)
     {
         const float a = startAngle + (float) i / 10.0f * (endAngle - startAngle);
-        const float d = (i == 0 || i == 5 || i == 10) ? outer * 0.15f : outer * 0.11f;
+        const float d = (i == 0 || i == 5 || i == 10) ? 2.6f : 1.8f;
         const auto p = c.getPointOnCircumference (outer * 0.86f, a);
         g.fillEllipse (p.x - d * 0.5f, p.y - d * 0.5f, d, d);
     }
 
-    // Black cap with a soft highlight and a white pointer line.
-    const float capR = outer * 0.70f;
-    g.setColour (juce::Colour (0xff4a4a4a).withAlpha (alpha));
-    g.fillEllipse (c.x - capR - 1.5f, c.y - capR - 1.5f, (capR + 1.5f) * 2.0f, (capR + 1.5f) * 2.0f);
-    g.setGradientFill (juce::ColourGradient (juce::Colour (0xff5e5e5e).withAlpha (alpha), c.x - capR * 0.3f, c.y - capR * 0.6f,
-                                             juce::Colour (0xff0c0c0c).withAlpha (alpha), c.x + capR * 0.4f, c.y + capR, true));
+    // White cap with a black pointer line.
+    g.setColour (juce::Colours::black.withAlpha (0.6f * alpha));
+    g.fillEllipse (c.x - capR + 1.0f, c.y - capR + 2.0f, capR * 2.0f, capR * 2.0f);
+    g.setGradientFill (juce::ColourGradient (juce::Colour (0xffd8d5cc).withAlpha (alpha), c.x - capR * 0.5f, c.y - capR,
+                                             juce::Colour (0xff97948a).withAlpha (alpha), c.x + capR * 0.5f, c.y + capR, false));
     g.fillEllipse (c.x - capR, c.y - capR, capR * 2.0f, capR * 2.0f);
+    g.setColour (juce::Colour (0xff6a6a6a).withAlpha (alpha));
+    g.drawEllipse (c.x - capR, c.y - capR, capR * 2.0f, capR * 2.0f, 1.0f);
 
     const float angle = startAngle + pos * (endAngle - startAngle);
-    g.setColour (juce::Colours::white.withAlpha (0.95f * alpha));
-    g.drawLine ({ c.getPointOnCircumference (capR * 0.55f, angle), c.getPointOnCircumference (capR * 0.95f, angle) }, 2.4f);
+    g.setColour (juce::Colour (0xff141414).withAlpha (alpha));
+    g.drawLine ({ c.getPointOnCircumference (capR * 0.2f, angle), c.getPointOnCircumference (capR * 0.95f, angle) }, 2.6f);
 }
 
 void PanelLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour&, bool highlighted, bool down)
@@ -184,7 +181,6 @@ DrumstationPanel::DrumstationPanel (DrumstationProcessor& p) : proc (p)
     auto& state = proc.apvts.state;
 
     setupKnob (volume);
-    volume.slider.getProperties().set ("volume", true);
     volume.attachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (proc.apvts, ParamIDs::volume, volume.slider);
     volume.slider.setTooltip ("Master volume (CC 7)");
 
@@ -569,9 +565,14 @@ void DrumstationPanel::drawLabel (juce::Graphics& g, juce::Point<float> c, const
                       juce::Justification::centred, lines, 0.7f);
 }
 
-void DrumstationPanel::drawKnobScale (juce::Graphics&, const Knob&) const
+void DrumstationPanel::drawKnobScale (juce::Graphics& g, const Knob& k) const
 {
-    // The V2 panel prints no numbers, only the dotted collar.
+    const auto b = k.slider.getBounds().toFloat();
+    const auto c = b.getCentre();
+    const float r = b.getWidth() * 0.5f;
+    const float alpha = k.slider.isEnabled() ? 1.0f : 0.35f;
+    drawLabel (g, c + juce::Point<float> (-r * 0.78f, r * 0.82f), k.scaleLeft, 8.5f, juce::Colours::white.withAlpha (alpha), 24.0f);
+    drawLabel (g, c + juce::Point<float> (r * 0.78f, r * 0.82f), k.scaleRight, 8.5f, juce::Colours::white.withAlpha (alpha), 24.0f);
 }
 
 void DrumstationPanel::drawLed (juce::Graphics& g, juce::Point<float> c, bool on, juce::Colour colour) const
@@ -621,117 +622,96 @@ void DrumstationPanel::paint (juce::Graphics& g)
 {
     using R = juce::Rectangle<float>;
     const float W = (float) designWidth;
-    const float H = (float) panelHeight;
     const auto& state = proc.apvts.state;
 
-    // Silver rack panel with white rack holes.
-    g.setGradientFill (juce::ColourGradient (silver.brighter (0.08f), 0.0f, 0.0f, silverDark, 0.0f, H, false));
-    g.fillRect (R (0.0f, 0.0f, W, H));
+    // Rack body and ears.
+    g.setColour (panelBlack);
+    g.fillRect (R (0.0f, 0.0f, W, (float) panelHeight));
+    g.setColour (earBlack);
+    g.fillRect (R (0.0f, 0.0f, 64.0f, (float) panelHeight));
+    g.fillRect (R (W - 64.0f, 0.0f, 64.0f, (float) panelHeight));
     g.setColour (juce::Colours::white);
     for (float x : { 26.0f, W - 26.0f })
-        for (float y : { 22.0f, H - 22.0f })
+        for (float y : { 22.0f, (float) panelHeight - 22.0f })
             g.fillRoundedRectangle (R (x - 15.0f, y - 7.0f, 30.0f, 14.0f), 7.0f);
-    g.setColour (juce::Colours::black.withAlpha (0.25f));
-    g.drawRect (R (0.0f, 0.0f, W, H), 1.0f);
 
-    // Dark data-entry block with its orange band.
-    const auto block = R (66.0f, 0.0f, 525.0f, H);
-    g.setColour (slate);
-    g.fillRect (block);
-    {
-        juce::Path band;
-        band.startNewSubPath (block.getRight(), 0.0f);
-        band.lineTo (block.getRight(), 15.0f);
-        band.lineTo (block.getX() + 186.0f, 15.0f);
-        band.lineTo (block.getX() + 186.0f, 6.0f);
-        band.lineTo (block.getX(), 6.0f);
-        band.lineTo (block.getX(), 0.0f);
-        band.closeSubPath();
-        g.setColour (orange);
-        g.fillPath (band);
-        g.setColour (juce::Colours::white);
-        g.setFont (juce::FontOptions (13.0f, juce::Font::bold));
-        g.drawText ("drum station", R (block.getX() + 200.0f, 0.0f, 150.0f, 15.0f), juce::Justification::centredLeft);
-        g.setFont (juce::FontOptions (9.0f));
-        g.drawText ("e d i t o r", R (block.getRight() - 140.0f, 0.0f, 130.0f, 15.0f), juce::Justification::centredRight);
-    }
-
-    drawLabel (g, { 147.0f, midLabelY }, "volume", 11.0f, captionLight);
-    drawLabel (g, { 221.0f, midLabelY }, "drum kit", 11.0f, captionLight);
+    // Left block: master volume, kit, data entry.
+    drawStrip (g, R (80.0f, 4.0f, 511.0f, stripH), red, {});
+    g.setColour (juce::Colours::white);
+    g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
+    g.drawText ("DRUMSTATION  EDITOR", R (100.0f, 4.0f, 300.0f, stripH), juce::Justification::centredLeft);
+    drawStrip (g, R (80.0f, midStripY, 190.0f, stripH), stripGrey, {});
+    drawLabel (g, { 147.0f, midStripY + 6.5f }, "VOLUME", 10.0f, stripText, 90.0f);
+    drawLabel (g, { 221.0f, midStripY + 6.5f }, "DRUM KIT", 10.0f, stripText, 90.0f);
+    drawKnobScale (g, volume);
 
     const int kit = (int) state.getProperty (StateIDs::kit, 1);
     drawLed (g, { 255.0f, 32.0f }, kit == ds::kit808);
     drawLed (g, { 255.0f, 66.0f }, kit == ds::kit909);
 
-    // Phones socket and write switch (decorative: writing comes with phase 2).
-    g.setColour (juce::Colour (0xff050505));
-    g.fillEllipse (131.0f, 115.0f, 32.0f, 32.0f);
-    g.setColour (juce::Colours::white);
-    g.drawEllipse (137.0f, 121.0f, 20.0f, 20.0f, 3.0f);
+    // Headphone socket and write switch (decorative: writing comes with phase 2).
+    g.setColour (juce::Colour (0xff2a2a2a));
+    g.fillEllipse (133.0f, 117.0f, 28.0f, 28.0f);
+    g.setColour (juce::Colour (0xffcfcfcf));
+    g.drawEllipse (133.0f, 117.0f, 28.0f, 28.0f, 3.0f);
+    g.setColour (juce::Colours::black);
+    g.fillEllipse (141.0f, 125.0f, 12.0f, 12.0f);
     {
-        auto sw = R (199.0f, 121.0f, 40.0f, 18.0f);
+        auto sw = R (203.0f, 124.0f, 36.0f, 16.0f);
         g.setColour (juce::Colour (0xff050505));
         g.fillRoundedRectangle (sw, 3.0f);
-        g.setColour (juce::Colour (0xff6a6a6a));
-        for (float x = sw.getX() + 4.0f; x < sw.getX() + 18.0f; x += 3.0f)
-            g.drawVerticalLine ((int) x, sw.getY() + 3.0f, sw.getBottom() - 3.0f);
-        g.setColour (captionLight);
-        g.drawLine (255.0f, 115.0f, 255.0f, 140.0f, 1.5f);
+        g.setColour (juce::Colour (0xff8a8a8a));
+        g.drawRoundedRectangle (sw, 3.0f, 1.2f);
+        g.setColour (juce::Colour (0xffe8e8e8));
+        g.fillRoundedRectangle (sw.withWidth (17.0f).translated (2.0f, 2.0f).withHeight (12.0f), 1.5f);
     }
-    drawLed (g, { 255.0f, 106.0f }, false);
-    drawLabel (g, { 221.0f, 151.0f }, "protect enable", 10.0f, captionLight, 100.0f);
-    drawLabel (g, { 147.0f, bottomLabelY }, "phones", 11.0f, captionLight);
-    drawLabel (g, { 221.0f, bottomLabelY }, "write", 11.0f, captionLight);
+    drawLed (g, { 255.0f, 108.0f }, false);
+    drawLabel (g, { 221.0f, 150.0f }, "PROTECT   ENABLE", 7.5f);
 
-    // Keypad captions, with the orange "compare" and "write" tags.
+    // Keypad captions.
     for (int row = 0; row < 4; ++row)
         for (int col = 0; col < 3; ++col)
         {
             const int k = keyGrid[row][col];
             const auto c = keyCentre (row, col);
-            drawLabel (g, { c.x, c.y + 16.0f + (k == 0 ? 4.0f : 0.0f) }, keyLabels[k], 9.0f, captionLight, 58.0f);
+            drawLabel (g, { c.x, c.y + 17.0f }, keyLabels[k], 7.0f, juce::Colours::white, 56.0f);
         }
-    for (int k : { 10, 11 })
-    {
-        const auto c = keyCentre (3, k == 10 ? 0 : 2);
-        const auto tag = R (c.x - 20.0f, c.y + 23.0f, 40.0f, 11.0f);
-        g.setColour (orange);
-        g.fillRoundedRectangle (tag, 1.5f);
-        drawLabel (g, tag.getCentre(), k == 10 ? "compare" : "write", 9.0f, juce::Colours::white, 40.0f);
-    }
 
     // Display: two digits and the mode LEDs.
     {
-        const auto box = R (437.0f, 24.0f, 150.0f, 92.0f);
+        const auto box = R (437.0f, 22.0f, 150.0f, 96.0f);
         g.setColour (juce::Colour (0xff050505));
         g.fillRoundedRectangle (box, 4.0f);
-        g.setColour (juce::Colour (0xff8a8f94));
+        g.setColour (juce::Colour (0xffcfcfcf));
         g.drawRoundedRectangle (box, 4.0f, 2.0f);
-        g.setColour (juce::Colour (0xff4a0a06));
-        g.fillRect (R (444.0f, 30.0f, 78.0f, 62.0f));
 
         const int value = modeValue();
         int d1 = segDash, d2 = segDash;
         if (firstDigit >= 0)            { d1 = firstDigit; d2 = segBlank; }
         else if (value >= 0)            { d1 = (value / 10) % 10; d2 = value % 10; }
-        drawSevenSegment (g, R (447.0f, 34.0f, 30.0f, 52.0f), d1, inLedHold > 0);
-        drawSevenSegment (g, R (482.0f, 34.0f, 30.0f, 52.0f), d2, outLedHold > 0);
+        drawSevenSegment (g, R (447.0f, 32.0f, 30.0f, 52.0f), d1, inLedHold > 0);
+        drawSevenSegment (g, R (482.0f, 32.0f, 30.0f, 52.0f), d2, outLedHold > 0);
 
         for (int m = 0; m < numModes; ++m)
         {
-            const float y = 36.0f + (float) m * 15.0f;
+            const float y = 34.0f + (float) m * 14.0f;
             g.setColour (juce::Colours::white);
-            g.setFont (juce::FontOptions (7.5f, juce::Font::bold));
-            g.drawText (modeNames[m], R (527.0f, y - 5.0f, 48.0f, 10.0f), juce::Justification::centredLeft);
-            drawLed (g, { 578.0f, y }, mode == m, m == modeProgram ? orange : ledRed);
+            g.setFont (juce::FontOptions (7.0f, juce::Font::bold));
+            g.drawText (modeNames[m], R (520.0f, y - 5.0f, 52.0f, 10.0f), juce::Justification::centredLeft);
+            drawLed (g, { 577.0f, y }, mode == m);
         }
         g.setColour (juce::Colours::white);
         g.setFont (juce::FontOptions (7.0f, juce::Font::bold));
-        g.drawText ("IN .     OUT .", R (447.0f, 99.0f, 75.0f, 10.0f), juce::Justification::centredLeft);
+        g.drawText ("IN .   OUT .", R (447.0f, 92.0f, 70.0f, 10.0f), juce::Justification::centredLeft);
     }
-    drawLabel (g, { 475.0f, 153.0f }, "audition", 11.0f, captionLight);
-    drawLabel (g, { 475.0f, bottomLabelY }, "auto trigger", 11.0f, captionLight);
-    drawLabel (g, { 548.0f, bottomLabelY }, "mode", 11.0f, captionLight);
+    drawLabel (g, { 475.0f, 152.0f }, "AUDITION", 7.5f);
+
+    drawStrip (g, R (80.0f, bottomStripY, 511.0f, stripH), stripGrey, {});
+    drawLabel (g, { 147.0f, bottomStripY + 6.5f }, "HEADPHONES", 10.0f, stripText, 90.0f);
+    drawLabel (g, { 221.0f, bottomStripY + 6.5f }, "WRITE", 10.0f, stripText, 90.0f);
+    drawLabel (g, { 351.0f, bottomStripY + 6.5f }, "DATA ENTRY", 10.0f, stripText, 90.0f);
+    drawLabel (g, { 475.0f, bottomStripY + 6.5f }, "AUTO TRIGGER", 10.0f, stripText, 90.0f);
+    drawLabel (g, { 548.0f, bottomStripY + 6.5f }, "MODE", 10.0f, stripText, 90.0f);
 
     // Sound sections.
     const int editVoice = (int) state.getProperty (StateIDs::editVoice, -1);
@@ -741,61 +721,54 @@ void DrumstationPanel::paint (juce::Graphics& g)
         const float x0 = sectionX (s), L = x0 + 37.0f, Rx = x0 + 120.0f;
         const bool editing = juce::isPositiveAndBelow (editVoice, ds::numVoices) && ds::voices[editVoice].section == s;
 
-        g.setColour (orange);
-        g.setFont (juce::FontOptions (12.5f, juce::Font::bold));
-        g.drawText (sectionTitles[s], R (x0, 0.0f, 156.0f, 14.0f), juce::Justification::centred);
+        drawStrip (g, R (x0, 4.0f, 156.0f, stripH), red, sectionTitles[s]);
         if (editing)
         {
-            g.setColour (orange);
-            g.fillRect (R (x0 + 20.0f, 14.5f, 116.0f, 1.5f));
+            g.setColour (juce::Colours::white.withAlpha (0.8f));
+            g.fillRect (R (x0, 17.0f, 156.0f, 1.5f));
         }
-        if (s > 0)
-        {
-            g.setColour (divider);
-            g.fillRect (R (x0 - 4.5f, 4.0f, 1.6f, H - 12.0f));
-        }
+        drawStrip (g, R (x0, midStripY, 156.0f, stripH), stripGrey, {});
+        drawLabel (g, { L, midStripY + 6.5f }, s == ds::secCymbals ? "TUNE / TONE" : "TUNE", 10.0f, stripText, 90.0f);
+        drawLabel (g, { Rx, midStripY + 6.5f }, "LEVEL", 10.0f, stripText, 90.0f);
 
-        drawLabel (g, { L, midLabelY }, s == ds::secCymbals ? "tune/tone" : "tune", 11.0f, caption);
-        drawLabel (g, { Rx, midLabelY }, "level", 11.0f, caption);
+        drawStrip (g, R (x0, bottomStripY, 156.0f, stripH), stripGrey, {});
+        const char* bl[] = { "ATTACK / TONE", "TONE", "DECAY", "", "DECAY", "DECAY", "CONGA SELECT" };
+        const char* br[] = { "DECAY", "SNAPPY", "SELECT", "SELECT", "SELECT", "SELECT", "SELECT" };
+        drawLabel (g, { L, bottomStripY + 6.5f }, bl[s], 10.0f, stripText, 82.0f);
+        drawLabel (g, { Rx, bottomStripY + 6.5f }, br[s], 10.0f, stripText, 82.0f);
 
-        const char* bl[] = { "attack/tone", "tone", "decay", "", "decay", "decay", "conga" };
-        const char* br[] = { "decay", "snappy", "", "", "", "", "" };
-        drawLabel (g, { L, bottomLabelY }, bl[s], 11.0f, caption, 82.0f);
-        drawLabel (g, { Rx, bottomLabelY }, br[s], 11.0f, caption, 82.0f);
+        for (auto* k : { &sec.tune, &sec.level, &sec.b1, &sec.b2 })
+            if (k->slider.isVisible())
+                drawKnobScale (g, *k);
 
         auto switchLabels = [&] (const SlideSwitch* sw, const char* top, const char* bottom)
         {
             if (sw == nullptr) return;
             const auto b = sw->getBounds().toFloat();
-            drawLabel (g, { b.getCentreX(), b.getBottom() + 8.0f }, top, 9.5f, caption, 82.0f);
+            drawLabel (g, { b.getCentreX(), b.getBottom() + 6.0f }, top, 7.0f, juce::Colours::white, 74.0f);
             if (bottom != nullptr)
-                drawLabel (g, { b.getCentreX(), b.getBottom() + 18.0f }, bottom, 9.5f, caption, 82.0f);
+                drawLabel (g, { b.getCentreX(), b.getBottom() + 14.0f }, bottom, 7.0f, juce::Colours::white, 74.0f);
         };
-        if (s == ds::secToms)        switchLabels (sec.select.get(), "low  mid  high", "1      2      3");
-        if (s == ds::secRimClapBell) switchLabels (sec.select.get(), "rimshot      cow", "handclap");
-        if (s == ds::secHiHat)       switchLabels (sec.select.get(), "closed    open", nullptr);
-        if (s == ds::secCymbals)     switchLabels (sec.select.get(), "crash      ride", nullptr);
+        if (s == ds::secToms)        switchLabels (sec.select.get(), "LOW   MID   HIGH", "1        2        3");
+        if (s == ds::secRimClapBell) switchLabels (sec.select.get(), "R'SHT  H'CLP  C'BLL", nullptr);
+        if (s == ds::secHiHat)       switchLabels (sec.select.get(), "CLOSED      OPEN", nullptr);
+        if (s == ds::secCymbals)     switchLabels (sec.select.get(), "CRASH      RIDE", nullptr);
         if (s == ds::secCongas)
         {
-            switchLabels (sec.select2.get(), "low  mid  high", "1      2      3");
-            switchLabels (sec.select.get(), "congas | claves", "maracas");
+            switchLabels (sec.select2.get(), "LOW   MID   HIGH", "1        2        3");
+            switchLabels (sec.select.get(), "C'NGAS M'CAS CL'VES", nullptr);
         }
 
         // Sounds the kit does not have (909: cowbell, congas; 808: ride).
         if (sec.voice < 0)
-            drawLabel (g, { x0 + 78.0f, 104.0f }, kit == ds::kit909 ? "808 only" : "909 only", 10.0f, orange, 80.0f);
+            drawLabel (g, { x0 + 78.0f, 112.0f }, kit == ds::kit909 ? "808 ONLY" : "909 ONLY", 8.0f, red, 80.0f);
     }
 
     // EDIT section, where the original has its logo.
     {
         const float x0 = 1741.0f, w = 179.0f;
-        g.setColour (divider);
-        g.fillRect (R (x0 - 4.5f, 4.0f, 1.6f, H - 12.0f));
-        g.setColour (orange);
-        g.setFont (juce::FontOptions (12.5f, juce::Font::bold));
-        g.drawText ("Edit", R (x0, 0.0f, w, 14.0f), juce::Justification::centred);
-
-        const auto name = R (x0 + 8.0f, 20.0f, w - 16.0f, 16.0f);
+        drawStrip (g, R (x0, 4.0f, w, stripH), red, "EDIT");
+        const auto name = R (x0 + 8.0f, 22.0f, w - 16.0f, 16.0f);
         g.setColour (juce::Colour (0xff050505));
         g.fillRoundedRectangle (name, 2.0f);
         g.setColour (segOn);
@@ -803,25 +776,32 @@ void DrumstationPanel::paint (juce::Graphics& g)
         g.drawText (juce::isPositiveAndBelow (editVoice, ds::numVoices) ? juce::String (ds::voices[editVoice].name).toUpperCase() : "-",
                     name, juce::Justification::centred);
 
-        drawLabel (g, { frontCut.slider.getBounds().toFloat().getCentreX(), midLabelY }, "front cut", 11.0f, caption);
-        drawLabel (g, { pan.slider.getBounds().toFloat().getCentreX(), midLabelY }, "pan", 11.0f, caption);
-        drawLabel (g, { distortion.slider.getBounds().toFloat().getCentreX(), midLabelY }, "distortion", 11.0f, caption);
+        for (auto* k : { &frontCut, &pan, &distortion })
+            drawKnobScale (g, *k);
+        drawStrip (g, R (x0, midStripY, w, stripH), stripGrey, {});
+        drawLabel (g, { frontCut.slider.getBounds().toFloat().getCentreX(), midStripY + 6.5f }, "FRONT CUT", 9.0f, stripText, 90.0f);
+        drawLabel (g, { pan.slider.getBounds().toFloat().getCentreX(), midStripY + 6.5f }, "PAN", 9.0f, stripText, 90.0f);
+        drawLabel (g, { distortion.slider.getBounds().toFloat().getCentreX(), midStripY + 6.5f }, "DIST", 9.0f, stripText, 90.0f);
 
         const auto gb = gmSwitch.getBounds().toFloat();
-        drawLabel (g, { gb.getCentreX(), gb.getBottom() + 8.0f }, "808      909", 9.5f, caption);
-        drawLabel (g, { gb.getCentreX(), bottomLabelY }, "audition map", 11.0f, caption);
-        drawLed (g, { x0 + 132.0f, 120.0f }, inLedHold > 0);
-        drawLed (g, { x0 + 160.0f, 120.0f }, outLedHold > 0);
-        drawLabel (g, { x0 + 132.0f, 135.0f }, "in", 9.5f, caption);
-        drawLabel (g, { x0 + 160.0f, 135.0f }, "out", 9.5f, caption);
-        drawLabel (g, { x0 + 146.0f, bottomLabelY }, "midi", 11.0f, caption);
+        drawLabel (g, { gb.getCentreX(), gb.getBottom() + 6.0f }, "808        909", 7.0f);
+        drawLed (g, { x0 + 132.0f, 118.0f }, inLedHold > 0);
+        drawLed (g, { x0 + 160.0f, 118.0f }, outLedHold > 0);
+        drawLabel (g, { x0 + 132.0f, 132.0f }, "IN", 7.5f);
+        drawLabel (g, { x0 + 160.0f, 132.0f }, "OUT", 7.5f);
+
+        drawStrip (g, R (x0, bottomStripY, w, stripH), stripGrey, {});
+        drawLabel (g, { gb.getCentreX(), bottomStripY + 6.5f }, "AUDITION MAP", 9.0f, stripText, 90.0f);
+        drawLabel (g, { x0 + 146.0f, bottomStripY + 6.5f }, "MIDI", 9.0f, stripText, 90.0f);
     }
 
     // MIDI setup strip.
     {
-        const auto strip = R (0.0f, H, W, (float) stripHeight);
+        const auto strip = R (0.0f, (float) panelHeight, W, (float) stripHeight);
         g.setColour (setupBg);
         g.fillRect (strip);
+        g.setColour (juce::Colour (0xff333333));
+        g.drawHorizontalLine (panelHeight, 0.0f, W);
 
         g.setColour (setupText);
         g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
@@ -839,9 +819,9 @@ void DrumstationPanel::paint (juce::Graphics& g)
         const int sysex = proc.sysexReceived.load();
         if (sysex > 0)
             status << "  |  SysEx received: " << sysex;
-        g.setColour (proc.isOutputOpen() ? juce::Colour (0xff9a9a9a) : orange);
+        g.setColour (proc.isOutputOpen() ? juce::Colour (0xff9a9a9a) : red);
         g.setFont (juce::FontOptions (10.5f));
-        g.drawText (status, R (1560.0f, H, 380.0f, (float) stripHeight), juce::Justification::centredRight);
+        g.drawText (status, R (1560.0f, (float) panelHeight, 380.0f, (float) stripHeight), juce::Justification::centredRight);
     }
 }
 
