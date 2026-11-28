@@ -32,6 +32,7 @@ enable_testing()
 
 add_subdirectory(core)
 add_subdirectory(plugins/slopebox)
+add_subdirectory(plugins/drumstation)
 
 # Further plugins go in plugins/<name> and are added here.
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/plugins/dl4/CMakeLists.txt)

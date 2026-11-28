@@ -16,6 +16,7 @@ plugins/slopebox/             Slopebox 1024 (ADM, memoria da 1024 ms, flanger/ec
   Source/SlopeboxConfig.h       configurazione del motore per questo modello
   tools/render.cpp              render offline e test di regressione
   tests/reference_levels.txt    livelli di riferimento del test
+plugins/drumstation/          Drumstation Editor (editor MIDI per il Novation DrumStation)
 plugins/<altro>/              ogni nuovo plugin ha la sua cartella con CMakeLists.txt
 ```
 
@@ -67,6 +68,27 @@ seguendo lo schema a blocchi del manuale originale.
 | Stereo | Quantità di stereo sintetizzato sull'uscita destra. |
 | Vintage | 100% = conversione ADM completa, 0% = stessa catena con memoria "pulita". |
 | Trim | Livello d'uscita del plugin. |
+
+## Drumstation Editor
+
+Editor hardware per l'expander Novation DrumStation (rack 1U, 808/909), sul modello degli editor
+Aura Plugins: non produce audio, apre direttamente le porte MIDI e comanda l'unità.
+Il pannello riprende quello originale (disegnato in codice, senza loghi).
+
+- Formati: AU (strumento, per una traccia Software Instrument di Logic), VST3, Standalone.
+- **MIDI OUT / MIDI IN**: porte scelte nella striscia sotto il pannello (es. MIDISPORT 4x4 porta D),
+  ricordate per le istanze nuove. RX CH / TX CH: canali di ricezione e trasmissione dell'unità (default 10).
+- 100 parametri automatizzabili, uno per controller della Controller Map del manuale (CC 20-119),
+  più Volume (CC 7) e Program (0-39). Ogni cambio manda il CC sul canale RX.
+- Le manopole dell'unità (CC sul canale TX) muovono i parametri del plugin, senza eco.
+- **RECALL ON LOAD**: all'apertura del progetto manda programma, volume e tutti i controller (total recall).
+  **SEND TO UNIT** fa lo stesso a mano. Un cambio di programma da solo non rimanda i controller.
+- Le note della traccia vanno all'unità sul canale RX. AUDITION suona il suono selezionato
+  (mappa note 808/909 come GEN MIDI SET dell'unità).
+- Level dei singoli suoni e funzioni Utility non hanno CC: arrivano con la fase 2 (dump SysEx).
+  Intanto **SAVE DUMP .SYX** salva i dump ricevuti dall'unità (MODE 5 - SAVE sul DrumStation).
+
+Mappa MIDI in `plugins/drumstation/Source/DrumstationMap.h`; test: `drumstation_midi_test` (ctest).
 
 ## Build
 
